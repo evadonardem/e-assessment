@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\QuestionOptionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,4 +21,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::resource('questions', QuestionController::class)
+    ->except(['create', 'edit']);
+
+Route::resource('questions/{question}/options', QuestionOptionController::class)
     ->except(['create', 'edit']);
