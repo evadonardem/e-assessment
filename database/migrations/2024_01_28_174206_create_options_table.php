@@ -18,11 +18,9 @@ return new class extends Migration
                 ->constrained()
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
-            $table->string('description');
+            $table->longText('description');
             $table->boolean('is_correct')->default(false);
             $table->timestamps();
-
-            $table->unique(['question_id', 'description']);
         });
     }
 

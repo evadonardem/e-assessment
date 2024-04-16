@@ -17,7 +17,8 @@ class QuestionFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'description' => $this->faker->text(),
+            'is_published' => $this->faker->boolean(),
         ];
     }
 }

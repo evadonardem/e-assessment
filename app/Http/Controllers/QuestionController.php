@@ -2,69 +2,82 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreQuestionRequest;
-use App\Http\Requests\UpdateQuestionRequest;
 use App\Models\Question;
+use App\Models\QuestionType;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class QuestionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        return Question::all();
+        $perPage = $request->input('per_page', 10);
+        $questions = tap(Question::with(['type', 'options'])
+            ->paginate($perPage))->map(function ($question) {
+                $question->description_preview =
+                    Str::limit(strip_tags($question->description), 50);
+                if ($question->is_random_options) {
+                    $question->setRelation('options', $question->options->shuffle());
+                }
+            });
+
+        return Inertia::render('Question/List', [
+            'questions' => $questions,
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreQuestionRequest $request)
+    public function create()
     {
-        $questionDetails = $request->only([
-            'description',
-            'question_type_id',
-            'is_random_options',
-            'is_published',
+        $questionTypes = tap(QuestionType::all())
+            ->transform(fn ($questionType) => $questionType->only([
+                'id',
+                'code',
+                'description',
+            ]));
+
+        return Inertia::render('Question/Create', [
+            'question_types' => $questionTypes,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $questionDescription = $request->input('description');
+        $questionTypeId = $request->input('question_type_id');
+        $isMcq = $questionTypeId === QuestionType::where('code', 'mcq')->first()->id;
+        $isArq = $questionTypeId === QuestionType::where('code', 'arq')->first()->id;
+        $isRandomOptions = $isMcq ? $request->input('is_random_options', false) : false;
+        $isPublished = $request->input('is_published', false);
+
+        $question = Question::create([
+            'question_type_id' => $questionTypeId,
+            'description' => $questionDescription,
+            'is_random_options' => $isRandomOptions,
+            'is_true' => $isArq ? $request->input('is_true', null) : null,
+            'is_published' => $isPublished,
         ]);
 
-        Question::create($questionDetails);
+        if ($isMcq) {
+            $questionOptions = $request->input('options');
+            $question->options()->createMany($questionOptions);
+        }
 
-        return response()->noContent();
+        return to_route('questions.list');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Question $question)
+    public function show()
     {
-        return $question;
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateQuestionRequest $request, Question $question)
-    {
-        $questionDetails = $request->only([
-            'description',
-            'is_random_options',
-            'is_published',
+        return Inertia::render('Question/Show', [
+            'question' => [],
         ]);
-
-        $question->newQuery()
-            ->update($questionDetails);
-
-        return response()->noContent();
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Question $question)
     {
+        if ($question->is_published) {
+            abort(400);
+        }
         $question->delete();
-
-        return response()->noContent();
     }
 }

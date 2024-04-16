@@ -9,7 +9,7 @@ services:
     networks:
       - database
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - "./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro"
       - "mysql_data:/var/lib/mysql"
@@ -35,4 +35,3 @@ volumes:
 # Networks setup
 networks:
   database:
-

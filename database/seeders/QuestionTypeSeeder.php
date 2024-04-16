@@ -15,11 +15,11 @@ class QuestionTypeSeeder extends Seeder
         $questionTypes = [
             [
                 'code' => 'MCQ',
-                'description' => 'Multiple Choice Questions',
+                'description' => 'Multiple Choice Question',
             ],
             [
                 'code' => 'ARQ',
-                'description' => 'Alternate Response Questions',
+                'description' => 'Alternate Response Question',
             ],
         ];
 

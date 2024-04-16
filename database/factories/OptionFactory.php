@@ -17,7 +17,7 @@ class OptionFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'description' => $this->faker->paragraph(),
         ];
     }
 }

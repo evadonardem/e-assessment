@@ -14,12 +14,14 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            $table->text('description');
+            $table->longText('description');
             $table->foreignIdFor(QuestionType::class)
                 ->constrained()
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
+            $table->json('tags')->nullable()->default(null);
             $table->boolean('is_random_options')->default(false);
+            $table->boolean('is_true')->nullable()->default(null);
             $table->boolean('is_published')->default(false);
             $table->timestamps();
         });
