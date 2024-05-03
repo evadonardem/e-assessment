@@ -10,6 +10,10 @@ class AssessmentAnswer extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'is_true' => 'boolean',
+    ];
+
     protected $fillable = [
         'assessment_id',
         'questionnaire_section_id',

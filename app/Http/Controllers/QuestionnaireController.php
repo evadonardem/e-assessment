@@ -130,6 +130,15 @@ class QuestionnaireController extends Controller
         $questionnaire->loadMissing('sections.questions.type');
         $filters = $request->input('filters', []);
 
+        $questionnaire->sections->map(function ($section) {
+            $section->setRelation('questions', $section->questions->shuffle());
+            $section->questions->map(function ($question) {
+                if (strcasecmp($question->type->code, 'mcq') === 0 && $question->is_random_options) {
+                    $question->setRelation('options', $question->options->shuffle());
+                }
+            });
+        });
+
         $availableQuestions = [];
         if (
             $filters['section_id'] ?? false &&
@@ -149,17 +158,123 @@ class QuestionnaireController extends Controller
                 });
             }
 
-            $availableQuestions = $availableQuestionsQuery->get();
+            if ($filters['tags'] ?? false) {
+                $tags = $filters['tags'];
+                $availableQuestionsQuery->where(function (Builder $query) use ($tags) {
+                    foreach ($tags as $tag) {
+                        $query->orWhereJsonContains('tags', $tag);
+                    }
+                });
+            }
+
+            $availableQuestions = $availableQuestionsQuery->with(['type', 'options'])->get();
+        }
+
+        $stats = null;
+        if ($questionnaire->is_published && $questionnaire->assessments->isNotEmpty()) {
+            $stats = $questionnaire->sections->mapWithKeys(function ($section) {
+                $questions = $section->questions->mapWithKeys(function ($question) {
+                    if (strcasecmp($question->type->code, 'mcq') === 0) {
+                        $data = $question->options->mapWithKeys(function ($option, $i) {
+                            return ['option-'.$option->id => collect([
+                                'id' => $option->id,
+                                'is_correct' => $option->is_correct,
+                                'responses' => 0,
+                                'label' => chr(65 + $i),
+                            ])];
+                        })->toArray();
+                    }
+
+                    if (strcasecmp($question->type->code, 'arq') === 0) {
+                        $data = [
+                            'true' => [
+                                'is_correct' => $question->is_true,
+                                'responses' => 0,
+                                'label' => 'True',
+                            ],
+                            'false' => [
+                                'is_correct' => ! $question->is_true,
+                                'responses' => 0,
+                                'label' => 'False',
+                            ],
+                        ];
+                    }
+
+                    return ['question-'.$question->id => [
+                        'id' => $question->id,
+                        'barChart' => [
+                            'dataset' => [],
+                            'xAxis' => [
+                                [
+                                    'scaleType' => 'band',
+                                    'dataKey' => 'label',
+                                ],
+                            ],
+                            'yAxis' => [
+                                [
+                                    'label' => 'Count',
+                                ],
+                            ],
+                            'series' => [
+                                [
+                                    'dataKey' => 'responses',
+                                    'label' => 'Responses',
+                                ],
+                            ],
+                        ],
+                        'gauge' => 0,
+                        'data' => $data,
+                    ]];
+                });
+
+                return ['section-'.$section->id => $questions];
+            })->toArray();
+
+            $questionnaire->assessments->pluck('answers')->flatten()->each(function ($answer) use (&$stats) {
+                if (
+                    strcasecmp($answer->question->type->code, 'mcq') === 0 &&
+                    array_key_exists(
+                        'option-'.$answer->option_id,
+                        $stats['section-'.$answer->questionnaire_section_id]['question-'.$answer->question_id]['data']
+                    )
+                ) {
+                    $optionRef = &$stats['section-'.$answer->questionnaire_section_id]['question-'.$answer->question_id]['data']['option-'.$answer->option_id];
+                    $optionRef['responses'] += 1;
+                }
+
+                if (
+                    strcasecmp($answer->question->type->code, 'arq') === 0 &&
+                    ! is_null($answer->is_true)
+                ) {
+                    $optionRef = &$stats['section-'.$answer->questionnaire_section_id]['question-'.$answer->question_id]['data'][$answer->is_true ? 'true' : 'false'];
+                    $optionRef['responses'] += 1;
+                }
+            });
+
+            foreach ($stats as &$section) {
+                foreach ($section as &$question) {
+                    $tally = array_values($question['data']);
+                    $correctResponses = array_filter($tally, function ($answer) {
+                        return $answer['is_correct'];
+                    });
+                    $allCorrectResponsesCount = array_sum(array_column($correctResponses, 'responses'));
+                    $allResponsesCount = array_sum(array_column($tally, 'responses'));
+                    $question['barChart']['dataset'] = $tally;
+                    $question['gauge'] = $allResponsesCount ? round($allCorrectResponsesCount / $allResponsesCount * 100) : 0;
+                }
+            }
         }
 
         return Inertia::render('Questionnaire/Show', [
             'filters' => [
                 'section_id' => $filters['section_id'] ?? null,
                 'question_type_code' => $filters['question_type_code'] ?? null,
+                'tags' => $filters['tags'] ?? null,
             ],
             'questionnaire' => $questionnaire,
             'questions' => $availableQuestions,
             'questionTypes' => $questionTypes,
+            'stats' => $stats,
         ]);
     }
 

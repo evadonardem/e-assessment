@@ -1,12 +1,34 @@
 import { router } from '@inertiajs/react';
-import { AccountBoxSharp, SendSharp, TopicSharp } from '@mui/icons-material';
-import { Avatar, Box, Button, ButtonGroup, Container, Paper, Stack, TextField, Typography } from '@mui/material';
+import {
+  AccountBoxSharp,
+  SendSharp,
+  TopicSharp
+} from '@mui/icons-material';
+import {
+  Avatar,
+  Box,
+  Button,
+  ButtonGroup,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Stack,
+  TextField,
+  Typography
+} from '@mui/material';
+import React from 'react';
 
 const Index = ({ assessment, answers, errors }) => {
   const questionnaire = assessment ? assessment.questionnaire : null;
   const name = assessment ? assessment.name : null;
   const questionnaireTitle = questionnaire ? questionnaire.title : null;
   const sections = questionnaire ? questionnaire.sections : null;
+
+  const [isActive, setIsActive] = React.useState(true);
+  const countAssesmentBlurAttempts = React.useRef(0);
 
   const handleAnswer = (section, option) => (e) => {
     e.preventDefault();
@@ -49,6 +71,15 @@ const Index = ({ assessment, answers, errors }) => {
       preserveScroll: true,
     });
   };
+
+  const handleBlurAssessment = () => {
+    setIsActive(false);
+    ++countAssesmentBlurAttempts.current;
+  };
+
+  React.useEffect(() => {
+    window.addEventListener("blur", handleBlurAssessment);
+  }, []);
 
   return (
     <Container>
@@ -129,7 +160,7 @@ const Index = ({ assessment, answers, errors }) => {
                       variant="text">
                       {`${i + 1}`}
                     </Button>
-                    <Typography>
+                    <Typography sx={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", KhtmlUserSelect: "none", MozUserSelect: "none", msUserSelect: "none", userSelect: "none" }}>
                       <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
                     </Typography>
                   </Stack>
@@ -145,7 +176,7 @@ const Index = ({ assessment, answers, errors }) => {
                           variant="contained">
                           {`${String.fromCharCode(65 + j)}`}
                         </Button>
-                        <Typography>
+                        <Typography sx={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", KhtmlUserSelect: "none", MozUserSelect: "none", msUserSelect: "none", userSelect: "none" }}>
                           <div dangerouslySetInnerHTML={{ __html: option.description }}></div>
                         </Typography>
                       </Stack>
@@ -187,6 +218,28 @@ const Index = ({ assessment, answers, errors }) => {
           startIcon={<SendSharp />}
           variant="contained">Submit</Button>
       </Paper>}
+
+      <Dialog
+        fullWidth
+        maxWidth='sm'
+        open={!isActive}
+        PaperProps={{
+          component: 'form',
+          onSubmit: (e) => {
+            e.preventDefault();
+            setIsActive(true);
+          },
+        }}>
+          <DialogTitle>Reminders</DialogTitle>
+          <DialogContent>
+            <Typography>Your not allowed to switch windows in the duration of your assessment.</Typography>
+            <Typography>Attempts: {countAssesmentBlurAttempts.current}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button type="submit">Continue</Button>
+          </DialogActions>
+      </Dialog>
+
     </Container>
   );
 };

@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [QuestionController::class, 'index'])->name('questions.list');
         Route::get('/create', [QuestionController::class, 'create']);
         Route::post('/', [QuestionController::class, 'store']);
+        Route::patch('/{question}', [QuestionController::class, 'update']);
         Route::get('/{question}', [QuestionController::class, 'show']);
         Route::delete('/{question}', [QuestionController::class, 'destroy']);
     });

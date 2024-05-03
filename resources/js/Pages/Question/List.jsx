@@ -1,26 +1,10 @@
 import DataTable from 'react-data-table-component';
 import Layout from '../Layout'
 import { router } from '@inertiajs/react';
-import { Button, ButtonGroup, Icon, Paper, Table, TableBody, TableCell, TableContainer, TableRow } from '@mui/material';
+import { Box, Button, ButtonGroup, Chip, Icon, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableRow, TextField } from '@mui/material';
 import { AddTwoTone, Check, CheckTwoTone, DeleteForever, Edit } from '@mui/icons-material';
 
-const handleAddQuestion = (e) => {
-  e.preventDefault();
-  router.get(`/questions/create`);
-};
-
-const handleDeleteQuestion = (question) => (e) => {
-  e.preventDefault();
-  router.delete(`/questions/${question.id}`);
-};
-
-const handleShowQuestion = (question) => (e) => {
-  e.preventDefault();
-  router.get(`/questions/${question.id}`);
-};
-
 const List = ({ questions }) => {
-
   const columns = [
     {
       name: 'ID',
@@ -28,6 +12,7 @@ const List = ({ questions }) => {
     },
     {
       name: 'Description',
+      width: "30%",
       selector: row => <div dangerouslySetInnerHTML={{ __html: row.description_preview }}></div>,
     },
     {
@@ -35,8 +20,20 @@ const List = ({ questions }) => {
       selector: row => row.type.code,
     },
     {
+      name: 'Correct Responses',
+      selector: row => row.correct_answers_count,
+    },
+    {
+      name: 'Responses',
+      selector: row => row.answers_count,
+    },
+    {
       name: 'Tags',
-      selector: row => row.tags,
+      width: "30%",
+      wrap: true,
+      cell: row => <Box sx={{ p: 2 }}>
+        {!!row.tags && row.tags.map((tag) => (<Chip label={tag} onDelete={handleDeleteTag(row.id, row.tags, tag)} sx={{ mb: 1, mr: 1 }}/>))}
+      </Box>,
     },
     {
       name: 'Random Options',
@@ -93,8 +90,57 @@ const List = ({ questions }) => {
     router.reload({ only: ['questions'] });
   };
 
+  const handleAddQuestion = (e) => {
+    e.preventDefault();
+    router.get(`/questions/create`);
+  };
+  
+  const handleAddTag = (questionId, currentTags) => (e) => {
+    if (e.keyCode === 13) {
+      currentTags.push(e.target.value);
+      router.patch(`/questions/${questionId}`, {
+        tags: currentTags,
+      }, {
+        preserveScroll: true,
+      });
+    }
+  };
+
+  const handleChangeTag = (questionId) => (e) => {
+    newTags.push({ questionId: e.target.value });
+  };
+  
+  const handleDeleteQuestion = (question) => (e) => {
+    e.preventDefault();
+    router.delete(`/questions/${question.id}`);
+  };
+  
+  const handleDeleteTag = (questionId, currentTags, deleteTag) => (e) => {
+    e.preventDefault();
+    const index = currentTags.indexOf(deleteTag);
+    if (index !== -1) {
+      currentTags.splice(index, 1);
+      router.patch(`/questions/${questionId}`, {
+        tags: currentTags,
+      }, {
+        preserveScroll: true,
+      });
+    }
+  };
+  
+  const handleShowQuestion = (question) => (e) => {
+    e.preventDefault();
+    router.get(`/questions/${question.id}`);
+  };
+
   const QuestionDetails = ({ data: question }) => {
     return (<Paper sx={{ m: 2, ml: 8, p: 2 }} elevation={1}>
+      <TextField
+          fullWidth
+          label="Add tag"
+          variant="outlined"
+          onChange={handleChangeTag(question.id)}
+          onKeyDown={handleAddTag(question.id, question.tags ?? [])}/>
       <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
       <TableContainer component={Paper}>
         <Table>

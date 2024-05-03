@@ -16,6 +16,7 @@
         "@inertiajs/react": "^1.0.14",
         "@mui/icons-material": "^5.15.11",
         "@mui/material": "^5.15.11",
+        "@mui/x-charts": "^7.3.1",
         "@tinymce/tinymce-react": "^5.0.0",
         "@vitejs/plugin-react": "^4.2.1",
         "@vitejs/plugin-vue": "^5.0.3",

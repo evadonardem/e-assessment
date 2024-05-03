@@ -11,9 +11,15 @@ class Question extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'is_true' => 'boolean',
+        'tags' => 'array',
+    ];
+
     protected $fillable = [
         'description',
         'question_type_id',
+        'tags',
         'is_random_options',
         'is_true',
         'is_published',
@@ -27,5 +33,10 @@ class Question extends Model
     public function options(): HasMany
     {
         return $this->hasMany(Option::class);
+    }
+
+    public function answers(): HasMany
+    {
+        return $this->hasMany(AssessmentAnswer::class);
     }
 }

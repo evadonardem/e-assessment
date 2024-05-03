@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Question;
 use App\Models\QuestionType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -14,6 +15,28 @@ class QuestionController extends Controller
     {
         $perPage = $request->input('per_page', 10);
         $questions = tap(Question::with(['type', 'options'])
+            ->withCount([
+                'answers',
+                'answers as correct_answers_count' => function (Builder $query) {
+                    $query->where(function (Builder $query) {
+                        $query->whereHas('question.type', function (Builder $query) {
+                            $query->where('code', 'mcq');
+                        });
+                        $query->whereHas('option', function (Builder $query) {
+                            $query->where('is_correct', 1);
+                        });
+                    })->orWhere(function (Builder $query) {
+                        $refTable = $query->getModel()->getTable();
+                        $query->whereHas('question.type', function (Builder $query) {
+                            $query->where('code', 'arq');
+                        });
+                        $query
+                            ->join('questions', "$refTable.question_id", 'questions.id')
+                            ->whereRaw("questions.is_true = $refTable.is_true");
+                    });
+                },
+            ])
+            ->orderBy('created_at', 'desc')
             ->paginate($perPage))->map(function ($question) {
                 $question->description_preview =
                     Str::limit(strip_tags($question->description), 50);
@@ -64,6 +87,11 @@ class QuestionController extends Controller
         }
 
         return to_route('questions.list');
+    }
+
+    public function update(Request $request, Question $question)
+    {
+        $question->update($request->all());
     }
 
     public function show()
