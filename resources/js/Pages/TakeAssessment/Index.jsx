@@ -73,8 +73,10 @@ const Index = ({ assessment, answers, errors }) => {
   };
 
   const handleBlurAssessment = () => {
-    setIsActive(false);
-    ++countAssesmentBlurAttempts.current;
+    if (assessment) {
+      ++countAssesmentBlurAttempts.current;
+      setIsActive(false);
+    }
   };
 
   React.useEffect(() => {
@@ -220,6 +222,7 @@ const Index = ({ assessment, answers, errors }) => {
       </Paper>}
 
       <Dialog
+        id={`dialog-assessment-blur-${countAssesmentBlurAttempts.current}`}
         fullWidth
         maxWidth='sm'
         open={!isActive}

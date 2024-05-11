@@ -164,6 +164,11 @@ const List = ({ questions }) => {
 
   return (
     <>
+      <ButtonGroup>
+        <Button onClick={handleAddQuestion}>
+          <AddTwoTone /> Add Question
+        </Button>
+      </ButtonGroup>
       <DataTable
         columns={columns}
         data={data}
@@ -176,12 +181,6 @@ const List = ({ questions }) => {
         expandableRows
         pagination
         paginationServer />
-
-      <ButtonGroup>
-        <Button onClick={handleAddQuestion}>
-          <AddTwoTone /> Add Question
-        </Button>
-      </ButtonGroup>
     </>
   );
 };
