@@ -22,7 +22,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [TakeAssessmentController::class, 'index'])->name('take-assessment');
 Route::post('/answers', [TakeAssessmentController::class, 'store']);
-Route::post('/submit-assessment', [TakeAssessmentController::class, 'update']);
+Route::post('/window-switch', [TakeAssessmentController::class, 'windowSwitch']);
+Route::post('/submit-assessment', [TakeAssessmentController::class, 'submitAssessment']);
 
 Route::get('/login', [LoginController::class, 'create'])->name('login');
 Route::post('/login', [LoginController::class, 'store']);

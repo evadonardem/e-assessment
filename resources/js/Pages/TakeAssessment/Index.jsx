@@ -1,10 +1,21 @@
-import { router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import {
   AccountBoxSharp,
+  AccountCircleTwoTone,
+  AlarmTwoTone,
+  HighlightOffTwoTone,
+  InfoTwoTone,
+  PsychologyTwoTone,
+  SchoolTwoTone,
   SendSharp,
-  TopicSharp
+  TimerTwoTone,
+  TopicSharp,
+  VisibilityTwoTone,
+  WarningTwoTone
 } from '@mui/icons-material';
 import {
+  Alert,
+  AppBar,
   Avatar,
   Box,
   Button,
@@ -14,21 +25,42 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
+  Icon,
+  IconButton,
   Paper,
+  Snackbar,
   Stack,
   TextField,
+  Toolbar,
   Typography
 } from '@mui/material';
 import React from 'react';
+import { useTimer } from 'react-timer-hook';
 
-const Index = ({ assessment, answers, errors }) => {
+const Index = ({ assessment, answers, errors, timer, attempts }) => {
+  const { flashMessage } = usePage().props;
+  const { submit: flashMessageSubmit } = flashMessage;
+  const [openFlashMessageSubmit, setOpenFlashMessageSubmit] = React.useState(true);
+
   const questionnaire = assessment ? assessment.questionnaire : null;
   const name = assessment ? assessment.name : null;
   const questionnaireTitle = questionnaire ? questionnaire.title : null;
   const sections = questionnaire ? questionnaire.sections : null;
 
-  const [isActive, setIsActive] = React.useState(true);
-  const countAssesmentBlurAttempts = React.useRef(0);
+  const maxAssessmentBlurAttempts = attempts?.max;
+  const [showReminder, setShowReminder] = React.useState(false);
+
+  const { hours, minutes, seconds } = useTimer({
+    autoStart: !!questionnaire && !!timer,
+    expiryTimestamp: (new Date()).setSeconds((new Date()).getSeconds() + (timer?.remaining_time_in_seconds ?? 0)),
+    onExpire: () => {
+      router.post('/submit-assessment', {
+        code: assessment.code,
+        timeExpired: 1,
+      });
+    },
+  });
 
   const handleAnswer = (section, option) => (e) => {
     e.preventDefault();
@@ -72,16 +104,26 @@ const Index = ({ assessment, answers, errors }) => {
     });
   };
 
-  const handleBlurAssessment = () => {
-    if (assessment) {
-      ++countAssesmentBlurAttempts.current;
-      setIsActive(false);
+  const handleBlurAssessment = React.useCallback(() => {
+    if (maxAssessmentBlurAttempts !== null) {
+      router.post('/window-switch', {
+        code: assessment.code,
+      }, {
+        preserveScroll: true,
+      });
     }
-  };
+    setShowReminder(true);
+  }, [setShowReminder]);
 
   React.useEffect(() => {
-    window.addEventListener("blur", handleBlurAssessment);
-  }, []);
+    if (assessment) {
+      window.addEventListener("blur", handleBlurAssessment)
+    } else {
+      window.removeEventListener("blur", handleBlurAssessment)
+    }
+
+    return () => window.removeEventListener("blur", handleBlurAssessment)
+  }, [assessment, handleBlurAssessment])
 
   return (
     <Container>
@@ -93,6 +135,9 @@ const Index = ({ assessment, answers, errors }) => {
           alignItems: 'center',
         }}
       >
+        <Head>
+          <title>Start</title>
+        </Head>
         <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
           <TopicSharp />
         </Avatar>
@@ -121,33 +166,65 @@ const Index = ({ assessment, answers, errors }) => {
             Start
           </Button>
         </Box>
+
+        {!!flashMessageSubmit && <Snackbar
+          open={openFlashMessageSubmit}
+          autoHideDuration={5000}
+          anchorOrigin={{ horizontal: "center", vertical: "top" }}
+          onClose={() => setOpenFlashMessageSubmit(false)}>
+          <Alert
+            severity={flashMessageSubmit.severity}>
+            {flashMessageSubmit.message}
+          </Alert>
+        </Snackbar>}
+
       </Box>}
 
-      {questionnaire && <Paper elevation={1} sx={{ m: 2, p: 2 }}>
-        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-          <Box sx={{flexGrow: 1}}>
-            <Stack direction="row" spacing={2}>
-              <AccountBoxSharp />
-              <Typography variant='h5'>{name}</Typography>
-            </Stack>
-          </Box>
-          <Box sx={{flexGrow: 1}}>
-            <Stack direction="row" spacing={2}>
-              <TopicSharp />
-              <Typography variant='h5'>{questionnaireTitle}</Typography>
-            </Stack>
-          </Box>
-        </Stack>
+      {questionnaire && <>
+        <Head>
+          <title>{`${name} (${assessment.code})`}</title>
+        </Head>
+        <React.Fragment>
+          <AppBar position="fixed">
+            <Toolbar>
+              <Stack sx={{ flexGrow: 1 }}>
+                <Stack direction="row" alignContent="center" alignItems="center">
+                  <IconButton color="inherit">
+                    <AccountCircleTwoTone />
+                  </IconButton>
+                  <Typography sx={{ flexGrow: 1 }} variant="h5">{name}</Typography>
+                </Stack>
+                <Stack direction="row" alignContent="center" alignItems="center">
+                  <IconButton color="inherit">
+                    <TopicSharp />
+                  </IconButton>
+                  <Typography sx={{ flexGrow: 1 }} variant="subtitle1">{questionnaireTitle}</Typography>
+                </Stack>
+              </Stack>
+              {timer &&
+                <Stack direction="row" alignContent="center" alignItems="center">
+                  <IconButton color="inherit">
+                    <AlarmTwoTone />
+                  </IconButton>
+                  <Typography variant="h4">
+                    {`${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`}
+                  </Typography>
+                </Stack>}
+            </Toolbar>
+          </AppBar>
+          <Toolbar />
+        </React.Fragment>
+      </>}
 
-        <Paper elevation={1} sx={{ mb: 2, p: 2 }}>
+      {questionnaire && <Paper elevation={10} sx={{ mt: 5, mb: 5, p: 5 }}>
+        <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
           <Typography>
             <div dangerouslySetInnerHTML={{ __html: questionnaire.description }}></div>
           </Typography>
         </Paper>
-
         <Stack spacing={2} sx={{ mb: 2 }}>
           {sections.map((section) => (<Box key={`section-${section.id}`}>
-            <Paper elevation={1} sx={{ mb: 2, p: 2 }}>
+            <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
               <Typography>
                 <div dangerouslySetInnerHTML={{ __html: section.description }}></div>
               </Typography>
@@ -212,7 +289,6 @@ const Index = ({ assessment, answers, errors }) => {
             </Stack>
           </Box>))}
         </Stack>
-
         <Button
           color="primary"
           fullWidth
@@ -221,27 +297,67 @@ const Index = ({ assessment, answers, errors }) => {
           variant="contained">Submit</Button>
       </Paper>}
 
-      <Dialog
-        id={`dialog-assessment-blur-${countAssesmentBlurAttempts.current}`}
+      {questionnaire && <Dialog
         fullWidth
-        maxWidth='sm'
-        open={!isActive}
+        open={showReminder}
         PaperProps={{
           component: 'form',
           onSubmit: (e) => {
             e.preventDefault();
-            setIsActive(true);
+            setShowReminder(false);
           },
         }}>
-          <DialogTitle>Reminders</DialogTitle>
-          <DialogContent>
-            <Typography>Your not allowed to switch windows in the duration of your assessment.</Typography>
-            <Typography>Attempts: {countAssesmentBlurAttempts.current}</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button type="submit">Continue</Button>
-          </DialogActions>
-      </Dialog>
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Icon><InfoTwoTone /></Icon>
+            <Typography variant="h5">Reminders</Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Divider />
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Icon><VisibilityTwoTone /></Icon>
+            <Typography>
+              Direct your attention solely to the exam interface or application that is open.
+            </Typography>
+          </Stack>
+          <Divider />
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Icon><HighlightOffTwoTone /></Icon>
+            <Typography>
+              Refrain from clicking or interacting with any elements outside the exam window.
+            </Typography>
+          </Stack>
+          <Divider />
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Icon><TimerTwoTone /></Icon>
+            <Typography>
+              Make the most of the allocated time by concentrating on answering questions rather than switching windows.
+            </Typography>
+          </Stack>
+          <Divider />
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Icon><PsychologyTwoTone /></Icon>
+            <Typography>
+              Understand that switching windows during the exam could be interpreted as cheating and may have serious consequences.
+            </Typography>
+          </Stack>
+          <Divider />
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Icon><SchoolTwoTone /></Icon>
+            <Typography>
+              Consider the importance of academic integrity and how adhering to the rule of not switching windows contributes to maintaining it.
+            </Typography>
+          </Stack>
+          <Divider />
+          <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
+            Auto-submit will trigger once detected continous attempts.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button type="submit">Continue</Button>
+        </DialogActions>
+      </Dialog>}
 
     </Container>
   );

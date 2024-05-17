@@ -93,6 +93,7 @@ const List = ({ questionnaires }) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const requestPayload = {
+      duration_in_seconds: data.get('duration_in_seconds'),
       names: data.get('names').split('\n'),
     };
     router.post(
@@ -141,6 +142,12 @@ const List = ({ questionnaires }) => {
           noValidate sx={{ mb: 2 }}
           onSubmit={handleCreateAssessment(questionnaire)}>
           <Stack spacing={2}>
+            <TextField
+              fullWidth
+              label="Duration in seconds"
+              type="number"
+              name="duration_in_seconds"
+              sx={{ width: "50%" }}/>
             <TextField
               fullWidth
               label="Enter names"

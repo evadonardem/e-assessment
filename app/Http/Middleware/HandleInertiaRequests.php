@@ -36,15 +36,12 @@ class HandleInertiaRequests extends Middleware
     {
         return array_merge(parent::share($request), [
             'appName' => config('app.name'),
-            'apiKeys' => [
-                'tinyMceApiKey' => 'pm89xh1s4bq3cgrn1232293tudye2x5lddh0siu6z65iflfq',
-            ],
             'auth' => Auth::user() ? [
                 'email' => Auth::user()->email,
                 'username' => Auth::user()->name,
             ] : null,
             'flashMessage' => [
-                'assessmentScore' => request()->session()->get('assessmentScore'),
+                'submit' => request()->session()->get('submit'),
             ],
         ]);
     }

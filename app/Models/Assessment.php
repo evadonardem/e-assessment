@@ -10,6 +10,8 @@ class Assessment extends Model
     use HasFactory;
 
     protected $fillable = [
+        'duration_in_seconds',
+        'max_attempts_on_blur',
         'name',
         'code',
     ];

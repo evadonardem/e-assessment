@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Assessment;
 use App\Models\AssessmentAnswer;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -44,53 +45,43 @@ class TakeAssessmentController extends Controller
                         'The code already mark as in progress.'
                     );
                 }
+            } else {
+                if ($request->has('code')) {
+                    $validator->errors()->add(
+                        'code',
+                        'Invalid code.'
+                    );
+                }
             }
         });
 
         if ($validator->fails()) {
-
-            $assessmentScore = null;
-            if ($assessment) {
-                $questions = $assessment->questionnaire->sections
-                    ->pluck('questions')
-                    ->flatten();
-                $totalPoints = $questions->count();
-
-                $keyAnswer = [];
-                $questions
-                    ->pluck('options')
-                    ->flatten()
-                    ->filter(fn ($option) => $option->is_correct)
-                    ->groupBy('question_id')
-                    ->values()
-                    ->each(function ($group) use (&$keyAnswer) {
-                        $group->each(function ($option) use (&$keyAnswer) {
-                            $keyAnswer[$option->question_id][] = $option->id;
-                        });
-                    });
-                $assessmentScore = $keyAnswer;
-
-                $totalScore = 0;
-                $assessment->answers->each(function ($answer) use (&$totalScore, $keyAnswer) {
-                    $ref = $keyAnswer[$answer->question_id] ?? null;
-                    $totalScore += $ref && in_array($answer->option_id, $ref) ? 1 : 0;
-                });
-
-                $assessmentScore = [
-                    'description' => $assessment->questionnaire->description,
-                    'name' => $assessment->name,
-                    'total_score' => $totalScore,
-                    'total_points' => $totalPoints,
-                ];
-            }
-
-            return redirect()
-                ->route('take-assessment')
-                ->with('assessmentScore', $assessmentScore)
-                ->withErrors($validator);
+            return redirect()->route('take-assessment')->withErrors($validator);
         }
 
+        $withTimer = false;
+        $assessmentDurationInSeconds = null;
+        $assessmentRemainingTimeInSeconds = null;
+
+        $withAttempts = false;
+        $maxAttemptsOnBlur = null;
+        $attemptsOnBlur = null;
+
         if ($assessment) {
+            $withTimer = ! is_null($assessment->duration_in_seconds);
+            $withAttempts = ! is_null($assessment->max_attempts_on_blur);
+
+            if ($withTimer) {
+                $assessmentDurationInSeconds = $assessment->duration_in_seconds;
+                $assessmentSpendTimeInSeconds = round(Carbon::parse($assessment->started_at)->diffInSeconds(now()));
+                $assessmentRemainingTimeInSeconds = $assessmentDurationInSeconds - $assessmentSpendTimeInSeconds;
+            }
+
+            if ($withAttempts) {
+                $maxAttemptsOnBlur = $assessment->max_attempts_on_blur;
+                $attemptsOnBlur = $assessment->attempts_on_blur;
+            }
+
             if (is_null($assessment->session_key)) {
                 $sessionKey = Hash::make($assessment->id.now());
                 $request->session()->put('session_key', $sessionKey);
@@ -98,6 +89,7 @@ class TakeAssessmentController extends Controller
                 $assessment->session_key = $sessionKey;
                 $assessment->save();
             }
+
             $assessment = Cache::rememberForever("assessment-$assessment->id", function () use ($assessment) {
                 $assessment->loadMissing('questionnaire.sections.questions.options');
                 $assessment->loadMissing('questionnaire.sections.questions.type');
@@ -118,6 +110,14 @@ class TakeAssessmentController extends Controller
         return Inertia::render('TakeAssessment/Index', [
             'assessment' => $assessment,
             'answers' => $assessment?->answers ?? [],
+            'timer' => $withTimer ? [
+                'duration_in_seconds' => $assessmentDurationInSeconds,
+                'remaining_time_in_seconds' => $assessmentRemainingTimeInSeconds,
+            ] : null,
+            'attempts' => $withAttempts ? [
+                'current' => $attemptsOnBlur,
+                'max' => $maxAttemptsOnBlur,
+            ] : null,
         ]);
     }
 
@@ -157,9 +157,10 @@ class TakeAssessmentController extends Controller
             ]);
     }
 
-    public function update(Request $request)
+    public function submitAssessment(Request $request)
     {
         $code = $request->input('code');
+        $timeExpired = $request->input('timeExpired');
         $sessionKey = $request->session()->get('session_key');
         $assessment = $this->assessment->newQuery()
             ->where([
@@ -176,5 +177,43 @@ class TakeAssessmentController extends Controller
 
         Cache::forget("assessment-$assessment->id");
         $request->session()->forget('session_key');
+
+        return redirect()->route('take-assessment')->with('submit', [
+            'severity' => $timeExpired ? 'warning' : 'success',
+            'message' => $timeExpired ? 'Auto-submitted alloted time expired.' : 'Assessment submitted successfully.',
+        ]);
+    }
+
+    public function windowSwitch(Request $request)
+    {
+        $code = $request->input('code');
+        $sessionKey = $request->session()->get('session_key');
+        $assessment = $this->assessment->newQuery()
+            ->where([
+                'code' => $code,
+                'session_key' => $sessionKey,
+            ])->first();
+
+        if (! $assessment) {
+            return redirect()->route('take-assessment');
+        }
+
+        if (! is_null($assessment->max_attempts_on_blur)) {
+            $assessment->attempts_on_blur = $assessment->attempts_on_blur + 1;
+            $assessment->save();
+
+            if ($assessment->attempts_on_blur >= $assessment->max_attempts_on_blur) {
+                $assessment->submitted_at = now();
+                $assessment->save();
+
+                Cache::forget("assessment-$assessment->id");
+                $request->session()->forget('session_key');
+
+                return redirect()->route('take-assessment')->with('submit', [
+                    'severity' => 'warning',
+                    'message' => 'Auto-submitted due to continous window switching.',
+                ]);
+            }
+        }
     }
 }

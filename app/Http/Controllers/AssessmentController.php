@@ -30,12 +30,15 @@ class AssessmentController extends Controller
      */
     public function store(StoreAssessmentRequest $request, Questionnaire $questionnaire)
     {
+        $durationInSeconds = $request->input('duration_in_seconds');
         $names = $request->input('names', []);
-        $names = array_map(function ($name) use ($questionnaire) {
+        $names = array_map(function ($name) use ($questionnaire, $durationInSeconds) {
             $code = now('Asia/Manila')->format('ymd-v').'-'.$questionnaire->id.'-'
                 .chr(65 + rand(0, 25)).chr(65 + rand(0, 25)).chr(65 + rand(0, 25));
 
             return [
+                'duration_in_seconds' => $durationInSeconds,
+                'max_attempts_on_blur' => 5,
                 'name' => $name,
                 'code' => $code,
             ];
