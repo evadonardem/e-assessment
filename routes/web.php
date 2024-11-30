@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Importer\AlternateResponseQuestionImporter;
+use App\Http\Controllers\Importer\MultipleChoiceQuestionImporter;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuestionnaireController;
 use App\Http\Controllers\QuestionnaireSectionController;
@@ -64,5 +66,16 @@ Route::middleware('auth')->group(function () {
         Route::patch('/{question}', [QuestionController::class, 'update']);
         Route::get('/{question}', [QuestionController::class, 'show']);
         Route::delete('/{question}', [QuestionController::class, 'destroy']);
+    });
+
+    Route::group(['prefix' => 'importer'], function () {
+        Route::get(
+            '/mcq',
+            [MultipleChoiceQuestionImporter::class, 'index']
+        );
+        Route::get(
+            '/arq',
+            [AlternateResponseQuestionImporter::class, 'index']
+        );
     });
 });

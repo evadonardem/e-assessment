@@ -100,9 +100,15 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
 
   const handleChangeSectionDescription = (sectionId) => (e) => {
     const value = e;
-    router.post(`/questionnaires/${questionnaire.id}/sections/${sectionId}`, {
-      description: value,
-    });
+    router.post(
+      `/questionnaires/${questionnaire.id}/sections/${sectionId}`,
+      {
+        description: value,
+      },
+      {
+        preserveScroll: true,
+      }
+    );
   };
 
   const handleChangeQuestionnaireDescription = (newContent) => {

@@ -172,6 +172,8 @@ class QuestionnaireController extends Controller
 
         $stats = null;
         if ($questionnaire->is_published && $questionnaire->assessments->isNotEmpty()) {
+            $questionnaire->loadMissing('assessments.answers.question.type');
+
             $stats = $questionnaire->sections->mapWithKeys(function ($section) {
                 $questions = $section->questions->mapWithKeys(function ($question) {
                     if (strcasecmp($question->type->code, 'mcq') === 0) {
@@ -230,23 +232,19 @@ class QuestionnaireController extends Controller
                 return ['section-'.$section->id => $questions];
             })->toArray();
 
-            $questionnaire->assessments->pluck('answers')->flatten()->each(function ($answer) use (&$stats) {
-                if (
-                    strcasecmp($answer->question->type->code, 'mcq') === 0 &&
-                    array_key_exists(
-                        'option-'.$answer->option_id,
-                        $stats['section-'.$answer->questionnaire_section_id]['question-'.$answer->question_id]['data']
-                    )
-                ) {
-                    $optionRef = &$stats['section-'.$answer->questionnaire_section_id]['question-'.$answer->question_id]['data']['option-'.$answer->option_id];
+            $answers = $questionnaire->assessments->pluck('answers')->flatten();
+            $answers->filter(fn($answer) => strcasecmp($answer->question->type->code, 'mcq') === 0)->each(function ($answer) use (&$stats) {
+                if (array_key_exists(
+                    'option-' . $answer->option_id,
+                    $stats['section-' . $answer->questionnaire_section_id]['question-' . $answer->question_id]['data']
+                )) {
+                    $optionRef = &$stats['section-' . $answer->questionnaire_section_id]['question-' . $answer->question_id]['data']['option-' . $answer->option_id];
                     $optionRef['responses'] += 1;
                 }
-
-                if (
-                    strcasecmp($answer->question->type->code, 'arq') === 0 &&
-                    ! is_null($answer->is_true)
-                ) {
-                    $optionRef = &$stats['section-'.$answer->questionnaire_section_id]['question-'.$answer->question_id]['data'][$answer->is_true ? 'true' : 'false'];
+            });
+            $answers->filter(fn($answer) => strcasecmp($answer->question->type->code, 'arq') === 0)->each(function ($answer) use (&$stats) {
+                if (! is_null($answer->is_true)) {
+                    $optionRef = &$stats['section-' . $answer->questionnaire_section_id]['question-' . $answer->question_id]['data'][$answer->is_true ? 'true' : 'false'];
                     $optionRef['responses'] += 1;
                 }
             });
@@ -264,6 +262,8 @@ class QuestionnaireController extends Controller
                 }
             }
         }
+
+        unset($questionnaire->assessments);
 
         return Inertia::render('Questionnaire/Show', [
             'filters' => [
