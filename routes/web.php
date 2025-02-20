@@ -77,5 +77,9 @@ Route::middleware('auth')->group(function () {
             '/arq',
             [AlternateResponseQuestionImporter::class, 'index']
         );
+        Route::get(
+            '/mcq-data-feed',
+            [MultipleChoiceQuestionImporter::class, 'dataFeed']
+        );
     });
 });

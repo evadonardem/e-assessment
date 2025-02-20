@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreQuestionnaireRequest;
 use App\Http\Requests\UpdateQuestionnaireRequest;
+use App\Http\Resources\AvailableQuestionResource;
 use App\Models\Question;
 use App\Models\Questionnaire;
 use App\Models\QuestionType;
@@ -139,7 +140,7 @@ class QuestionnaireController extends Controller
             });
         });
 
-        $availableQuestions = [];
+        $availableQuestions = collect();
         if (
             $filters['section_id'] ?? false &&
             $questionnaire->sections->pluck('id')->contains($filters['section_id'])
@@ -167,7 +168,10 @@ class QuestionnaireController extends Controller
                 });
             }
 
-            $availableQuestions = $availableQuestionsQuery->with(['type', 'options'])->get();
+            $availableQuestionsQuery->withCount(['answers']);
+            $availableQuestionsQuery->orderBy('updated_at', 'desc');
+            
+            $availableQuestions = $availableQuestionsQuery->with(['type', 'options'])->paginate(15);
         }
 
         $stats = null;
@@ -272,7 +276,7 @@ class QuestionnaireController extends Controller
                 'tags' => $filters['tags'] ?? null,
             ],
             'questionnaire' => $questionnaire,
-            'questions' => $availableQuestions,
+            'questions' => AvailableQuestionResource::collection($availableQuestions),
             'questionTypes' => $questionTypes,
             'stats' => $stats,
         ]);

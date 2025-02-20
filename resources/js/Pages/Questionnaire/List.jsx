@@ -4,11 +4,9 @@ import { router } from '@inertiajs/react';
 import { Box, Button, ButtonGroup, Dialog, DialogActions, DialogContent, DialogTitle, Icon, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { AddTwoTone, Check, DeleteForever, Edit, PreviewSharp } from '@mui/icons-material';
 import React from 'react';
-
+import generatePDF, { Margin, Resolution } from 'react-to-pdf';
 const List = ({ questionnaires }) => {
   const [createQuestionnaireModelOpen, setCreateQuestionnaireModelOpen] = React.useState(false);
-
-
   const handleCreateQuestionnaire = () => {
     setCreateQuestionnaireModelOpen(true);
   };
@@ -103,10 +101,22 @@ const List = ({ questionnaires }) => {
     );
   };
 
+  const openPDF = (questionnaire) => {
+    const options = {
+      filename: `${questionnaire.title}.pdf`,
+      method: 'open',
+      page: {
+        margin: Margin.MEDIUM,
+      }
+    };
+    generatePDF(() => document.getElementById(`questionnaire-${questionnaire.id}`), options);
+  };
+
   const QuestionDetails = ({ data: questionnaire }) => {
     return (<Paper sx={{ m: 2, p: 2 }} elevation={3}>
       {!!questionnaire.is_published && <>
-        <TableContainer component={Paper} sx={{ mb: 2 }}>
+        <Button onClick={() => openPDF(questionnaire)} sx={{ mb: 2 }} variant='contained'>Download PDF</Button>
+        <TableContainer component={Paper} id={`questionnaire-${questionnaire.id}`} sx={{ mb: 2 }}>
           <Table>
             <TableHead>
               <TableRow>

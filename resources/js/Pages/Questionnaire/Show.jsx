@@ -2,6 +2,8 @@ import { router } from '@inertiajs/react';
 import {
   AddCardSharp,
   DeleteTwoTone,
+  Filter,
+  FilterListSharp,
   PlaylistAddSharp,
   Send
 } from '@mui/icons-material';
@@ -18,6 +20,7 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
+  Pagination,
   Paper,
   Select,
   Stack,
@@ -36,6 +39,8 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
   const [filteredSectionId, setFilteredSectionId] = React.useState(sectionId);
   const [filteredQuestionTypeCode, setFilteredQuestionTypeCode] = React.useState(questionTypeCode);
   const [filteredTags, setFilteredTags] = React.useState(tags ?? []);
+
+  const { meta: questionsMeta } = questions;
 
   const handleAddQuestionToSection = (questionId, toSectionId) => (e) => {
     e.preventDefault();
@@ -60,6 +65,18 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
         preserveScroll: true,
       });
     }
+  };
+
+  const handlePaginationChange = (_e, page) => {
+    router.get(`/questionnaires/${questionnaire.id}`, {
+      filters: {
+        ...filters,
+        tags: filteredTags,
+      },
+      page
+    }, {
+      preserveScroll: true,
+    });
   };
 
   const handleAddSection = (e) => {
@@ -151,6 +168,8 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
       is_published: true,
     });
   };
+
+  
 
   return (
     <>
@@ -299,13 +318,22 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                 </FormControl>
               </Stack>
               <Box sx={{ mb: 2 }}>
+                <Typography><FilterListSharp /> Filters</Typography>
                 <Stack spacing={2} sx={{ mb: 2 }}>
                   {filteredTags.map((tag) => (<Chip label={tag} onDelete={handleDeleteFilterTag(tag)} />))}
                 </Stack>
                 <TextField fullWidth label="Add tag filter" variant="outlined" onKeyDown={handleAddFilterTag} />
               </Box>
+              
+              {questionsMeta && <Box sx={{ mb: 2 }}>
+                <Pagination
+                  onChange={handlePaginationChange}
+                  count={questionsMeta.last_page}
+                  page={questionsMeta.current_page} />
+              </Box>}
+
               <Stack>
-                {!!questions.length && questions.map((question) => (<Paper sx={{ mb: 2, p: 2 }}>
+                {!!questions.data.length && questions.data.map((question) => (<Paper sx={{ mb: 2, p: 2 }}>
                   <Stack spacing={1}>
                     <Typography>
                       <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
@@ -320,6 +348,9 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                         </Typography>
                       </Stack>
                     </Box>))}
+                    <Box sx={{ mb: 2 }}>
+                      <Typography>Total Answers Count: {question.answers_count}</Typography>
+                    </Box>
                     {question.type.code.toLowerCase() === 'arq' && <ButtonGroup>
                       <Button
                         color={!!question.is_true ? "success" : "inherit"}
@@ -342,6 +373,14 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                   </Stack>
                 </Paper>))}
               </Stack>
+
+              {questionsMeta && <Box sx={{ mb: 2 }}>
+                <Pagination
+                  onChange={handlePaginationChange}
+                  count={questionsMeta.last_page}
+                  page={questionsMeta.current_page} />
+              </Box>}
+
             </Box>}
           </Paper>
         </Box>}

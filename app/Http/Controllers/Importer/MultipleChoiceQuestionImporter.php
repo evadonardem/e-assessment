@@ -7,7 +7,9 @@ use App\Models\Option;
 use App\Models\Question;
 use App\Models\QuestionType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class MultipleChoiceQuestionImporter extends Controller
 {
@@ -63,5 +65,43 @@ class MultipleChoiceQuestionImporter extends Controller
             }
         }
         fclose($fileHandle);
+    }
+
+    public function dataFeed()
+    {
+        $files = Storage::disk('local')->files('data_feeds');
+        foreach ($files as $path) {
+            $storagePath = Storage::disk('local')->path($path);
+            $tag = Str::of($storagePath)->explode('/');
+            $tag = Str::of($tag->last())->explode('.')->first();
+             
+            $data = File::json($storagePath);
+            foreach ($data as $question) {
+                $questionDescription = $question['description'];
+                $isNew = ! $this->questionModel->newQuery()
+                    ->where('description', $questionDescription)
+                    ->exists();
+                if ($isNew) {
+                    $newQuestionData = [
+                        'description' => $questionDescription,
+                        'question_type_id' => $this->questionTypeId,
+                        'tags' => [$tag],
+                        'is_random_options' => 1,
+                        'is_published' => 1,
+                    ];
+                    
+                    $correctOptionIndex = $question['answer'];
+                    $newQuestionOptionsData = collect($question['options'])
+                        ->map(function ($optionDescription, $key) use ($correctOptionIndex) {
+                            return [
+                                'description' => $optionDescription,
+                                'is_correct' => $key == $correctOptionIndex,
+                            ];
+                        })->toArray();
+                    $question = $this->questionModel->newQuery()->create($newQuestionData);
+                    $question->options()->createMany($newQuestionOptionsData);
+                }
+            }
+        }
     }
 }
