@@ -17,7 +17,6 @@
         "@mui/icons-material": "^6.4.5",
         "@mui/material": "^6.4.5",
         "@mui/x-charts": "^7.27.0",
-        "@tinymce/tinymce-react": "^5.1.1",
         "@vitejs/plugin-react": "^4.3.4",
         "@vitejs/plugin-vue": "^5.2.1",
         "jodit-react": "^5.2.15",
