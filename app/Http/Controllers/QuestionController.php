@@ -103,7 +103,7 @@ class QuestionController extends Controller
 
     public function destroy(Question $question)
     {
-        if ($question->is_published) {
+        if ($question->is_published && $question->answers->isNotEmpty()) {
             abort(400);
         }
         $question->delete();

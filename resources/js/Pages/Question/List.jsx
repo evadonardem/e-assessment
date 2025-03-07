@@ -8,11 +8,12 @@ const List = ({ questions }) => {
   const columns = [
     {
       name: 'ID',
+      width: "5%",
       selector: row => row.id,
     },
     {
       name: 'Description',
-      width: "30%",
+      width: "25%",
       selector: row => <div dangerouslySetInnerHTML={{ __html: row.description_preview }}></div>,
     },
     {
@@ -29,7 +30,7 @@ const List = ({ questions }) => {
     },
     {
       name: 'Tags',
-      width: "30%",
+      width: "10%",
       wrap: true,
       cell: row => <Box sx={{ p: 2 }}>
         {!!row.tags && row.tags.map((tag) => (<Chip label={tag} onDelete={handleDeleteTag(row.id, row.tags, tag)} sx={{ mb: 1, mr: 1 }}/>))}
@@ -46,21 +47,19 @@ const List = ({ questions }) => {
     {
       name: '',
       button: true,
-      cell: row => (<>
-        {!!!row.is_published && <ButtonGroup
-          color="primary"
-          size="small"
-          variant="text">
-          <Button
-            onClick={handleShowQuestion(row)}>
-              <Edit />
-          </Button>
-          <Button
-            onClick={handleDeleteQuestion(row)}>
-              <DeleteForever />
-          </Button>
-        </ButtonGroup>}
-      </>),
+      cell: row => <ButtonGroup
+        color="primary"
+        size="small"
+        variant="text">
+        <Button
+          onClick={handleShowQuestion(row)}>
+          <Edit />
+        </Button>
+        <Button
+          onClick={handleDeleteQuestion(row)}>
+          <DeleteForever />
+        </Button>
+      </ButtonGroup>,
     }
   ];
 

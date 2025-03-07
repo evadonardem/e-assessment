@@ -1,18 +1,16 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import {
-  AccountBoxSharp,
   AccountCircleTwoTone,
   AlarmTwoTone,
+  CenterFocusStrong,
   HighlightOffTwoTone,
-  InfoTwoTone,
+  Monitor,
   PsychologyTwoTone,
   SchoolTwoTone,
   SendSharp,
   TimerTwoTone,
   TopicSharp,
-  VisibilityTwoTone,
-  WarningTwoTone
-} from '@mui/icons-material';
+  VisibilityTwoTone} from '@mui/icons-material';
 import {
   Alert,
   AppBar,
@@ -24,9 +22,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   Divider,
-  Icon,
   IconButton,
   Paper,
   Snackbar,
@@ -35,10 +31,77 @@ import {
   Toolbar,
   Typography
 } from '@mui/material';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
 
+const ALLOWED_BASE_SCREEN_SIZE_RATIO = {
+  width: 0.98,
+  height: 0.80,
+};
+
+const ScreenSizeTooSmallDialog = () => <Dialog open fullScreen>
+  <DialogContent>
+    <Box textAlign="center">
+      <Monitor sx={{ fontSize: 175 }} />
+      <Typography variant="h5">Screen Size Adjustment Needed</Typography>
+    </Box>
+    <Divider sx={{ my: 2 }} />
+    <Alert severity="warning" sx={{ mb: 2 }}>
+      Your current browser window size is not optimal for this platform.
+      For the best experience, please resize or maximize your browser window.
+    </Alert>
+    <Alert severity="info">
+      As you adjust your screen, remember that academic integrity is fundamental
+      to your educational success. A properly sized display can help you engage fully
+      with the material and ensures that all work submitted is a true reflection of
+      your own understanding and efforts. Upholding these standards not only helps
+      you learn but also fosters a culture of trust and respect
+      in the academic community.
+    </Alert>
+  </DialogContent>
+</Dialog>;
+
+const StayFocusedDialog = ({onContinue}) => <Dialog open fullScreen>
+  <DialogContent>
+    <Box textAlign="center">
+      <CenterFocusStrong sx={{ fontSize: 175 }} />
+      <Typography variant="h5">Stay Focused</Typography>
+    </Box>
+    <Divider sx={{ my: 2 }} />
+    <Alert icon={<VisibilityTwoTone />} severity="info" sx={{ mb: 1 }}>
+      Direct your attention solely to the exam interface or application that is open.
+    </Alert>
+    <Alert icon={<HighlightOffTwoTone />} severity="info" sx={{ mb: 1 }}>
+      Refrain from clicking or interacting with any elements outside the exam window.
+    </Alert>
+    <Alert icon={<TimerTwoTone />} severity="info" sx={{ mb: 1 }}>
+      Make the most of the allocated time by concentrating on answering questions rather than switching windows.
+    </Alert>
+    <Alert icon={<PsychologyTwoTone />} severity="info" sx={{ mb: 1 }}>
+      Understand that switching windows during the exam could be interpreted as cheating and may have serious consequences.
+    </Alert>
+    <Alert icon={<SchoolTwoTone />} severity="info" sx={{ mb: 1 }}>
+      Consider the importance of academic integrity and how adhering to the rule of not switching windows contributes to maintaining it.
+    </Alert>
+    <Divider sx={{ my: 2 }} />
+    <Alert severity="warning" sx={{ mb: 1 }}>
+      Auto-submit will trigger once detected continous attempts.
+    </Alert>
+  </DialogContent>
+  <DialogActions>
+    <Button type="submit" onClick={onContinue}>Continue</Button>
+  </DialogActions>
+</Dialog>;
+
 const Index = ({ assessment, answers, errors, timer, attempts }) => {
+  
+  const [isScreenSizeTooSmall, setIsScreenSizeTooSmall] = useState(
+    window.devicePixelRatio === 1 && (
+      window.innerWidth / screen.availWidth < ALLOWED_BASE_SCREEN_SIZE_RATIO.width ||
+      window.innerHeight / screen.availHeight < ALLOWED_BASE_SCREEN_SIZE_RATIO.height
+    ) || window.devicePixelRatio < 0.85 || window.devicePixelRatio > 1.25
+  );
+
   const { flashMessage } = usePage().props;
   const { submit: flashMessageSubmit } = flashMessage;
   const [openFlashMessageSubmit, setOpenFlashMessageSubmit] = React.useState(true);
@@ -104,8 +167,11 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
     });
   };
 
-  const handleBlurAssessment = React.useCallback(() => {
-    if (maxAssessmentBlurAttempts !== null) {
+  const handleVisibilityChangeAssessment = () => {
+    if (isScreenSizeTooSmall) {
+      return;
+    }
+    if (maxAssessmentBlurAttempts !== null && document.hidden) {
       router.post('/window-switch', {
         code: assessment.code,
       }, {
@@ -113,17 +179,75 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
       });
     }
     setShowReminder(true);
-  }, [setShowReminder]);
+  };
+
+  useEffect(() => {
+    // disable text selection, cut, copy and paste
+    document.body.style.WebkitTouchCallout = 'none';
+    document.body.style.WebkitUserSelect = 'none';
+    document.body.style.KhtmlUserSelect = 'none';
+    document.body.style.MozUserSelect = 'none';
+    document.body.style.msUserSelect = 'none';
+    document.body.style.userSelect = 'none';
+    document.body.oncontextmenu = () => false;
+    document.body.oncopy = () => false;
+    document.body.oncut = () => false;
+    document.body.onpaste = () => false;
+
+    // disable window zoom-in and zoom-out
+    document.addEventListener('keydown', (event) => {
+      if (event.ctrlKey == true && (
+        event.key == '0' ||
+        event.key == '-' ||
+        event.key == '+' ||
+        event.key == '='
+      )) {
+        event.preventDefault();
+      }
+    });
+    document.addEventListener('wheel', (event) => {
+      if (event.ctrlKey) {
+        event.preventDefault();
+      }
+    }, { passive: false });
+
+    // check screen size
+    window.onresize = () => {
+      const isScreenSizeTooSmall =
+        window.devicePixelRatio === 1 && (
+          window.innerWidth / screen.availWidth < ALLOWED_BASE_SCREEN_SIZE_RATIO.width ||
+          window.innerHeight / screen.availHeight < ALLOWED_BASE_SCREEN_SIZE_RATIO.height
+        ) || window.devicePixelRatio < 0.85 || window.devicePixelRatio > 1.25;
+      setIsScreenSizeTooSmall(isScreenSizeTooSmall);
+      if (isScreenSizeTooSmall) {
+        setShowReminder(false);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    document.onmouseleave = () => {
+      if (!isScreenSizeTooSmall && !showReminder) {
+        if (maxAssessmentBlurAttempts !== null) {
+          router.post('/window-switch', {
+            code: assessment.code,
+          }, {
+            preserveScroll: true,
+          });
+        }
+        setShowReminder(true);
+      }
+    };
+  }, [isScreenSizeTooSmall, maxAssessmentBlurAttempts, showReminder]);
 
   React.useEffect(() => {
     if (assessment) {
-      window.addEventListener("blur", handleBlurAssessment)
+      window.addEventListener("visibilitychange", handleVisibilityChangeAssessment);
     } else {
-      window.removeEventListener("blur", handleBlurAssessment)
+      window.removeEventListener("visibilitychange", handleVisibilityChangeAssessment);
     }
-
-    return () => window.removeEventListener("blur", handleBlurAssessment)
-  }, [assessment, handleBlurAssessment])
+    return () => window.removeEventListener("visibilitychange", handleVisibilityChangeAssessment);
+  }, [assessment, handleVisibilityChangeAssessment])
 
   return (
     <Container>
@@ -297,68 +421,11 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
           variant="contained">Submit</Button>
       </Paper>}
 
-      {questionnaire && <Dialog
-        fullWidth
-        open={showReminder}
-        PaperProps={{
-          component: 'form',
-          onSubmit: (e) => {
-            e.preventDefault();
-            setShowReminder(false);
-          },
-        }}>
-        <DialogTitle>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Icon><InfoTwoTone /></Icon>
-            <Typography variant="h5">Reminders</Typography>
-          </Stack>
-        </DialogTitle>
-        <DialogContent>
-          <Divider />
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Icon><VisibilityTwoTone /></Icon>
-            <Typography>
-              Direct your attention solely to the exam interface or application that is open.
-            </Typography>
-          </Stack>
-          <Divider />
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Icon><HighlightOffTwoTone /></Icon>
-            <Typography>
-              Refrain from clicking or interacting with any elements outside the exam window.
-            </Typography>
-          </Stack>
-          <Divider />
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Icon><TimerTwoTone /></Icon>
-            <Typography>
-              Make the most of the allocated time by concentrating on answering questions rather than switching windows.
-            </Typography>
-          </Stack>
-          <Divider />
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Icon><PsychologyTwoTone /></Icon>
-            <Typography>
-              Understand that switching windows during the exam could be interpreted as cheating and may have serious consequences.
-            </Typography>
-          </Stack>
-          <Divider />
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Icon><SchoolTwoTone /></Icon>
-            <Typography>
-              Consider the importance of academic integrity and how adhering to the rule of not switching windows contributes to maintaining it.
-            </Typography>
-          </Stack>
-          <Divider />
-          <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
-            Auto-submit will trigger once detected continous attempts.
-          </Alert>
-        </DialogContent>
-        <DialogActions>
-          <Button type="submit">Continue</Button>
-        </DialogActions>
-      </Dialog>}
-
+      {showReminder && <StayFocusedDialog onContinue={() => {
+        setShowReminder(false);
+      }}/>}
+      
+      {isScreenSizeTooSmall && !showReminder && <ScreenSizeTooSmallDialog />}
     </Container>
   );
 };
