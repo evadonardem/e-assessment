@@ -162,7 +162,7 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
     const requestPayload = {
       code: data.get('code'),
     };
-    router.get('/', requestPayload, {
+    router.get('/take-assessment', requestPayload, {
       preserveScroll: true,
     });
   };
@@ -252,23 +252,27 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
   return (
     <Container>
       {!assessment && <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="90vh"
       >
         <Head>
           <title>Start</title>
         </Head>
-        <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-          <TopicSharp />
-        </Avatar>
-        <Typography component="h1" variant="h5">
-          Take Assessment
-        </Typography>
-        <Box component="form" onSubmit={handleTakeAssessment} noValidate sx={{ mt: 1 }}>
+        <Box
+          component="form"
+          textAlign="center"
+          onSubmit={handleTakeAssessment}
+          noValidate sx={{ mt: 1 }}
+        >
+          <Avatar sx={{ m: "auto", bgcolor: 'secondary.main' }}>
+            <TopicSharp />
+          </Avatar>
+          <Typography component="h1" variant="h5">
+            Take Assessment
+          </Typography>
+          <Divider sx={{ my: 2 }} />
           <TextField
             error={!!errors.code}
             helperText={errors?.code}
@@ -280,7 +284,7 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
             autoComplete={false}
             autoFocus
           />
-
+          <Divider sx={{ my: 2 }} />
           <Button
             type="submit"
             fullWidth
