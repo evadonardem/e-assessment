@@ -2,7 +2,6 @@ import { router } from '@inertiajs/react';
 import {
   AddCardSharp,
   DeleteTwoTone,
-  Filter,
   FilterListSharp,
   PlaylistAddSharp,
   Send
@@ -15,6 +14,7 @@ import {
   Button,
   ButtonGroup,
   Chip,
+  Divider,
   FormControl,
   Grid,
   IconButton,
@@ -30,7 +30,8 @@ import {
 import Editor from 'jodit-react';
 import Layout from '../Layout';
 import React from 'react';
-import { BarChart, Gauge, PieChart } from '@mui/x-charts';
+import { BarChart, Gauge } from '@mui/x-charts';
+import generatePDF, { Margin } from 'react-to-pdf';
 
 const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
   const { section_id: sectionId, question_type_code: questionTypeCode, tags } = filters;
@@ -169,10 +170,23 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
     });
   };
 
-  
+  const openPDF = (questionnaire) => {
+    const options = {
+      filename: `${questionnaire.title}.pdf`,
+      method: 'open',
+      page: {
+        margin: Margin.MEDIUM,
+      }
+    };
+    generatePDF(() => document.getElementById(`questionnaire-${questionnaire.id}`), options);
+  };
 
-  return (
-    <>
+  return (<React.Fragment>
+    {!!questionnaire.is_published && <Box>
+      <Button onClick={() => openPDF(questionnaire)} sx={{ mb: 2 }} variant='contained'>Download PDF</Button>
+      <Divider sx={{ mt: 1, mb: 2 }} />
+    </Box>}
+    <Box id={`questionnaire-${questionnaire.id}`}>
       <Stack spacing={2} sx={{ mb: 2 }}>
         <Typography variant='h5'>{questionnaire.title}</Typography>
         {!!!questionnaire.is_published ? <Editor
@@ -198,7 +212,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
       <Stack direction="row" spacing={2}>
         {/* Questionnaire Sections */}
         <Box width={!!questionnaire.is_published ? '100%' : '50%'}>
-          {sections.map((section, i) => (<Accordion key={`section-${section.id}`}>
+          {sections.map((section, i) => (<Accordion key={`section-${section.id}`} defaultExpanded>
             <AccordionSummary>
               <Typography sx={{ flexGrow: 1 }}>
                 {`Section ${i + 1}`}
@@ -233,7 +247,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                     </Stack>
                     <Stack sx={{ ml: 10 }}>
                       <Grid container spacing={2}>
-                        <Grid item md={8}>
+                        <Grid size={8}>
                           {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => (
                             <Box sx={{ mb: 2 }}>
                               <Stack direction="row" spacing={2}>
@@ -260,24 +274,28 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                             </ButtonGroup>
                           </Stack>}
                         </Grid>
-                        <Grid item md={4}>
-                          
+                        <Grid size={4}>
+
                         </Grid>
                       </Grid>
                     </Stack>
-                    {!!questionnaire.is_published && !!stats && <Stack direction="row" spacing={2}>
-                      <Gauge
-                        value={stats[`section-${section.id}`][`question-${question.id}`].gauge}
-                        height={200}
-                        sx={{ flexGrow: 1, width: "100%" }}/>
-                      <BarChart
-                        dataset={stats[`section-${section.id}`][`question-${question.id}`].barChart.dataset}
-                        xAxis={stats[`section-${section.id}`][`question-${question.id}`].barChart.xAxis}
-                        yAxis={stats[`section-${section.id}`][`question-${question.id}`].barChart.yAxis}
-                        series={stats[`section-${section.id}`][`question-${question.id}`].barChart.series}
-                        height={200}
-                        sx={{ flexGrow: 1, width: "100%" }}/>
-                    </Stack>}
+                    {!!questionnaire.is_published && !!stats && <Grid container spacing={2}>
+                      <Grid size={6}>
+                        <Gauge
+                          value={stats[`section-${section.id}`][`question-${question.id}`].gauge}
+                          height={200}
+                          sx={{ width: "100%" }} />
+                      </Grid>
+                      <Grid size={6}>
+                        <BarChart
+                          dataset={stats[`section-${section.id}`][`question-${question.id}`].barChart.dataset}
+                          xAxis={stats[`section-${section.id}`][`question-${question.id}`].barChart.xAxis}
+                          yAxis={stats[`section-${section.id}`][`question-${question.id}`].barChart.yAxis}
+                          series={stats[`section-${section.id}`][`question-${question.id}`].barChart.series}
+                          height={200}
+                          sx={{ width: "100%" }} />
+                      </Grid>
+                    </Grid>}
                   </Box>
                 ))}
               </Stack>
@@ -324,7 +342,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                 </Stack>
                 <TextField fullWidth label="Add tag filter" variant="outlined" onKeyDown={handleAddFilterTag} />
               </Box>
-              
+
               {questionsMeta && <Box sx={{ mb: 2 }}>
                 <Pagination
                   onChange={handlePaginationChange}
@@ -385,8 +403,8 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
           </Paper>
         </Box>}
       </Stack>
-    </>
-  );
+    </Box>
+  </React.Fragment>);
 };
 
 Show.layout = page => <Layout children={page} title="Questionnaires" />

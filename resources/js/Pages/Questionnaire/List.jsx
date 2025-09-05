@@ -5,6 +5,14 @@ import { Box, Button, ButtonGroup, Dialog, DialogActions, DialogContent, DialogT
 import { AddTwoTone, Check, DeleteForever, Edit, PreviewSharp } from '@mui/icons-material';
 import React from 'react';
 import generatePDF, { Margin, Resolution } from 'react-to-pdf';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault("Asia/Manila");
+
 const List = ({ questionnaires }) => {
   const [createQuestionnaireModelOpen, setCreateQuestionnaireModelOpen] = React.useState(false);
   const handleCreateQuestionnaire = () => {
@@ -124,12 +132,23 @@ const List = ({ questionnaires }) => {
                 <TableCell>Code</TableCell>
                 <TableCell>Started At</TableCell>
                 <TableCell>Submitted At</TableCell>
+                <TableCell>Time Spent</TableCell>
                 <TableCell>Score</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {questionnaire.assessments.map((assessment) => (
-                <TableRow
+              {questionnaire.assessments.map((assessment) => {
+                const startedAt = assessment.started_at
+                  ? dayjs.utc(assessment.started_at).tz().format("DD MMM YYYY hh:mm:ss A")
+                  : "-";
+                const submittedAt = assessment.submitted_at
+                  ? dayjs.utc(assessment.submitted_at).tz().format("DD MMM YYYY hh:mm:ss A")
+                  : "-";
+                const timeSpent = assessment.submitted_at && assessment.started_at
+                  ? dayjs.utc(assessment.submitted_at).diff(dayjs.utc(assessment.started_at), 'minutes', true).toFixed(2)
+                  : null;
+
+                return (<TableRow
                   key={assessment.code}
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
@@ -137,12 +156,13 @@ const List = ({ questionnaires }) => {
                     {assessment.name}
                   </TableCell>
                   <TableCell>{assessment.code}</TableCell>
-                  <TableCell>{assessment.started_at}</TableCell>
-                  <TableCell>{assessment.submitted_at}</TableCell>
+                  <TableCell>{startedAt}</TableCell>
+                  <TableCell>{submittedAt}</TableCell>
+                  <TableCell>{`${timeSpent ? `${timeSpent} minutes` : "-"}`}</TableCell>
                   <TableCell>{assessment.submitted_at
                     ? `${assessment.total_score}/${questionnaire.total_points}` : null}</TableCell>
-                </TableRow>
-              ))}
+                </TableRow>);
+              })}
             </TableBody>
           </Table>
         </TableContainer>
@@ -157,7 +177,7 @@ const List = ({ questionnaires }) => {
               label="Duration in seconds"
               type="number"
               name="duration_in_seconds"
-              sx={{ width: "50%" }}/>
+              sx={{ width: "50%" }} />
             <TextField
               fullWidth
               label="Enter names"

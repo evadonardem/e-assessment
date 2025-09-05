@@ -10,7 +10,8 @@ import {
   SendSharp,
   TimerTwoTone,
   TopicSharp,
-  VisibilityTwoTone} from '@mui/icons-material';
+  VisibilityTwoTone
+} from '@mui/icons-material';
 import {
   Alert,
   AppBar,
@@ -61,7 +62,7 @@ const ScreenSizeTooSmallDialog = () => <Dialog open fullScreen>
   </DialogContent>
 </Dialog>;
 
-const StayFocusedDialog = ({onContinue}) => <Dialog open fullScreen>
+const StayFocusedDialog = ({ onContinue }) => <Dialog open fullScreen>
   <DialogContent>
     <Box textAlign="center">
       <CenterFocusStrong sx={{ fontSize: 175 }} />
@@ -94,7 +95,7 @@ const StayFocusedDialog = ({onContinue}) => <Dialog open fullScreen>
 </Dialog>;
 
 const Index = ({ assessment, answers, errors, timer, attempts }) => {
-  
+
   const [isScreenSizeTooSmall, setIsScreenSizeTooSmall] = useState(
     window.devicePixelRatio === 1 && (
       window.innerWidth / screen.availWidth < ALLOWED_BASE_SCREEN_SIZE_RATIO.width ||
@@ -114,9 +115,14 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
   const maxAssessmentBlurAttempts = attempts?.max;
   const [showReminder, setShowReminder] = React.useState(false);
 
+  const expiryTimestamp = new Date();
+  expiryTimestamp.setSeconds(expiryTimestamp.getSeconds() + (timer?.remaining_time_in_seconds ?? 0));
+
+  console.log('Dave: ', expiryTimestamp);
+
   const { hours, minutes, seconds } = useTimer({
+    expiryTimestamp,
     autoStart: !!questionnaire && !!timer,
-    expiryTimestamp: (new Date()).setSeconds((new Date()).getSeconds() + (timer?.remaining_time_in_seconds ?? 0)),
     onExpire: () => {
       router.post('/submit-assessment', {
         code: assessment.code,
@@ -227,7 +233,7 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
 
   useEffect(() => {
     document.onmouseleave = () => {
-      if (!isScreenSizeTooSmall && !showReminder) {
+      if (assessment && !isScreenSizeTooSmall && !showReminder) {
         if (maxAssessmentBlurAttempts !== null) {
           router.post('/window-switch', {
             code: assessment.code,
@@ -427,8 +433,8 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
 
       {showReminder && <StayFocusedDialog onContinue={() => {
         setShowReminder(false);
-      }}/>}
-      
+      }} />}
+
       {isScreenSizeTooSmall && !showReminder && <ScreenSizeTooSmallDialog />}
     </Container>
   );
