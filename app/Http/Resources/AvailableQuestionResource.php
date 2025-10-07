@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,6 +23,10 @@ class AvailableQuestionResource extends JsonResource
             'options' => $this->when(
                 strcasecmp($this->type->code, 'mcq') === 0,
                 QuestionOptionResource::collection($this->options->shuffle())
+            ),
+            'is_true' => $this->when(
+                strcasecmp($this->type->code, 'arq') === 0,
+                $this->is_true
             ),
         ];
     }

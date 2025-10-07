@@ -50,7 +50,7 @@ class QuestionOptionController extends Controller
             'is_correct',
         ]);
 
-        $query = new Option();
+        $query = new Option;
         $query->newQuery()
             ->where([
                 'id' => $option->id,
@@ -66,7 +66,7 @@ class QuestionOptionController extends Controller
      */
     public function destroy(Question $question, Option $option)
     {
-        $query = new Option();
+        $query = new Option;
         $query->newQuery()
             ->where([
                 'id' => $option->id,

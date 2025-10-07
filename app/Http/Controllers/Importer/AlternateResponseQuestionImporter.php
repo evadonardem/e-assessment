@@ -7,7 +7,9 @@ use App\Models\Option;
 use App\Models\Question;
 use App\Models\QuestionType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AlternateResponseQuestionImporter extends Controller
 {
@@ -48,5 +50,36 @@ class AlternateResponseQuestionImporter extends Controller
             }
         }
         fclose($fileHandle);
+    }
+
+    public function dataFeed()
+    {
+        $files = Storage::disk('local')->files('arq_data_feed');
+        dump($files);
+        foreach ($files as $path) {
+            $storagePath = Storage::disk('local')->path($path);
+            $tag = Str::of($storagePath)->explode('/');
+            $tag = Str::of($tag->last())->explode('.')->first();
+
+            $data = File::json($storagePath);
+            foreach ($data as $question) {
+                $questionDescription = $question['description'];
+                $isNew = ! $this->questionModel->newQuery()
+                    ->where('description', $questionDescription)
+                    ->exists();
+                if (! $isNew) {
+                    continue;
+                }
+                $newQuestionData = [
+                    'description' => $questionDescription,
+                    'question_type_id' => $this->questionTypeId,
+                    'tags' => [$tag],
+                    'is_published' => 1,
+                    'is_true' => $question['answer'] === true,
+                ];
+
+                $this->questionModel->newQuery()->create($newQuestionData);
+            }
+        }
     }
 }

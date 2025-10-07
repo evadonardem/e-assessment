@@ -16,9 +16,7 @@ class TakeAssessmentController extends Controller
     public function __construct(
         protected Assessment $assessment,
         protected AssessmentAnswer $assessmentAnswer
-    ) {
-
-    }
+    ) {}
 
     public function index(Request $request)
     {

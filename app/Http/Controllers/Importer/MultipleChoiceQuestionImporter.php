@@ -74,7 +74,7 @@ class MultipleChoiceQuestionImporter extends Controller
             $storagePath = Storage::disk('local')->path($path);
             $tag = Str::of($storagePath)->explode('/');
             $tag = Str::of($tag->last())->explode('.')->first();
-             
+
             $data = File::json($storagePath);
             foreach ($data as $question) {
                 $questionDescription = $question['description'];
@@ -89,7 +89,7 @@ class MultipleChoiceQuestionImporter extends Controller
                         'is_random_options' => 1,
                         'is_published' => 1,
                     ];
-                    
+
                     $correctOptionIndex = $question['answer'];
                     $newQuestionOptionsData = collect($question['options'])
                         ->map(function ($optionDescription, $key) use ($correctOptionIndex) {

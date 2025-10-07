@@ -18,9 +18,7 @@ class QuestionnaireController extends Controller
 {
     public function __construct(
         protected Question $question
-    ) {
-
-    }
+    ) {}
 
     /**
      * Display a listing of the resource.
@@ -170,7 +168,7 @@ class QuestionnaireController extends Controller
 
             $availableQuestionsQuery->withCount(['answers']);
             $availableQuestionsQuery->orderBy('updated_at', 'desc');
-            
+
             $availableQuestions = $availableQuestionsQuery->with(['type', 'options'])->paginate(15);
         }
 
@@ -237,18 +235,18 @@ class QuestionnaireController extends Controller
             })->toArray();
 
             $answers = $questionnaire->assessments->pluck('answers')->flatten();
-            $answers->filter(fn($answer) => strcasecmp($answer->question->type->code, 'mcq') === 0)->each(function ($answer) use (&$stats) {
+            $answers->filter(fn ($answer) => strcasecmp($answer->question->type->code, 'mcq') === 0)->each(function ($answer) use (&$stats) {
                 if (array_key_exists(
-                    'option-' . $answer->option_id,
-                    $stats['section-' . $answer->questionnaire_section_id]['question-' . $answer->question_id]['data']
+                    'option-'.$answer->option_id,
+                    $stats['section-'.$answer->questionnaire_section_id]['question-'.$answer->question_id]['data']
                 )) {
-                    $optionRef = &$stats['section-' . $answer->questionnaire_section_id]['question-' . $answer->question_id]['data']['option-' . $answer->option_id];
+                    $optionRef = &$stats['section-'.$answer->questionnaire_section_id]['question-'.$answer->question_id]['data']['option-'.$answer->option_id];
                     $optionRef['responses'] += 1;
                 }
             });
-            $answers->filter(fn($answer) => strcasecmp($answer->question->type->code, 'arq') === 0)->each(function ($answer) use (&$stats) {
+            $answers->filter(fn ($answer) => strcasecmp($answer->question->type->code, 'arq') === 0)->each(function ($answer) use (&$stats) {
                 if (! is_null($answer->is_true)) {
-                    $optionRef = &$stats['section-' . $answer->questionnaire_section_id]['question-' . $answer->question_id]['data'][$answer->is_true ? 'true' : 'false'];
+                    $optionRef = &$stats['section-'.$answer->questionnaire_section_id]['question-'.$answer->question_id]['data'][$answer->is_true ? 'true' : 'false'];
                     $optionRef['responses'] += 1;
                 }
             });

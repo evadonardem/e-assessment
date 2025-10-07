@@ -23,7 +23,7 @@ class QuestionTypeSeeder extends Seeder
             ],
         ];
 
-        $model = new QuestionType();
+        $model = new QuestionType;
         foreach ($questionTypes as $questionType) {
             $isExist = $model->newQuery()
                 ->where('code', $questionType['code'])

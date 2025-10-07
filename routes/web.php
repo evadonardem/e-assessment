@@ -83,5 +83,9 @@ Route::middleware('auth')->group(function () {
             '/mcq-data-feed',
             [MultipleChoiceQuestionImporter::class, 'dataFeed']
         );
+        Route::get(
+            '/arq-data-feed',
+            [AlternateResponseQuestionImporter::class, 'dataFeed']
+        );
     });
 });
