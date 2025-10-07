@@ -31,10 +31,7 @@ function Copyright(props) {
 
 const defaultTheme = createTheme();
 
-export default function Login({errors}) {
-
-  console.log(errors);
-
+export default function Login() {
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);

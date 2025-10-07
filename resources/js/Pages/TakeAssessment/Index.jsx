@@ -34,6 +34,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
+import PropTypes from 'prop-types';
 
 const ALLOWED_BASE_SCREEN_SIZE_RATIO = {
   width: 0.98,
@@ -93,6 +94,10 @@ const StayFocusedDialog = ({ onContinue }) => <Dialog open fullScreen>
     <Button type="submit" onClick={onContinue}>Continue</Button>
   </DialogActions>
 </Dialog>;
+
+StayFocusedDialog.propTypes = {
+  onContinue: PropTypes.func.isRequired,
+};
 
 const Index = ({ assessment, answers, errors, timer, attempts }) => {
 
@@ -381,7 +386,7 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
                     {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => (
                       <Stack key={`section-${section.id}-question-${question.id}-option-${option.id}`} direction="row" spacing={2}>
                         <Button
-                          color={!!answers.find((ans) => ans.questionnaire_section_id == section.id &&
+                          color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
                             ans.question_id == question.id &&
                             ans.option_id == option.id) ? "primary" : "inherit"}
                           onClick={handleAnswer(section, option)}
@@ -399,7 +404,7 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
                       sx={{ width: "25%" }}
                       variant="contained">
                       <Button
-                        color={!!answers.find((ans) => ans.questionnaire_section_id == section.id &&
+                        color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
                           ans.question_id == question.id &&
                           ans.is_true !== null &&
                           !!ans.is_true) ? "primary" : "inherit"}
@@ -408,10 +413,10 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
                         True
                       </Button>
                       <Button
-                        color={!!answers.find((ans) => ans.questionnaire_section_id == section.id &&
+                        color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
                           ans.question_id == question.id &&
                           ans.is_true !== null &&
-                          !!!ans.is_true) ? "primary" : "inherit"}
+                          !ans.is_true) ? "primary" : "inherit"}
                         onClick={handleAnswerAlternateResponseQuestion(section, question, false)}
                         size="small">
                         False
@@ -438,6 +443,14 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
       {isScreenSizeTooSmall && !showReminder && <ScreenSizeTooSmallDialog />}
     </Container>
   );
+};
+
+Index.propTypes = {
+  assessment: PropTypes.object,
+  answers: PropTypes.array,
+  errors: PropTypes.object,
+  timer: PropTypes.object,
+  attempts: PropTypes.object,
 };
 
 export default Index;

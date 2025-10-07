@@ -1,8 +1,10 @@
 import DataTable from 'react-data-table-component';
 import Layout from '../Layout'
 import { router } from '@inertiajs/react';
-import { Box, Button, ButtonGroup, Chip, Icon, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableRow, TextField } from '@mui/material';
+import { Box, Button, ButtonGroup, Chip, Icon, Paper, Table, TableBody, TableCell, TableContainer, TableRow, TextField } from '@mui/material';
 import { AddTwoTone, Check, CheckTwoTone, DeleteForever, Edit } from '@mui/icons-material';
+import React from 'react';
+import PropTypes from 'prop-types';
 
 const List = ({ questions }) => {
   const columns = [
@@ -33,16 +35,16 @@ const List = ({ questions }) => {
       width: "10%",
       wrap: true,
       cell: row => <Box sx={{ p: 2 }}>
-        {!!row.tags && row.tags.map((tag) => (<Chip label={tag} onDelete={handleDeleteTag(row.id, row.tags, tag)} sx={{ mb: 1, mr: 1 }}/>))}
+        {!!row.tags && row.tags.map((tag, tagIndex) => (<Chip key={`tag-${tagIndex}`} label={tag} onDelete={handleDeleteTag(row.id, row.tags, tag)} sx={{ mb: 1, mr: 1 }}/>))}
       </Box>,
     },
     {
       name: 'Random Options',
-      cell: row => (!!row.is_random_options ? <Icon><Check /></Icon> : null),
+      cell: row => (row.is_random_options ? <Icon><Check /></Icon> : null),
     },
     {
       name: 'Published',
-      cell: row => (!!row.is_published ? <Icon><Check /></Icon> : null),
+      cell: row => (row.is_published ? <Icon><Check /></Icon> : null),
     },
     {
       name: '',
@@ -104,10 +106,6 @@ const List = ({ questions }) => {
       });
     }
   };
-
-  const handleChangeTag = (questionId) => (e) => {
-    newTags.push({ questionId: e.target.value });
-  };
   
   const handleDeleteQuestion = (question) => (e) => {
     e.preventDefault();
@@ -138,7 +136,6 @@ const List = ({ questions }) => {
           fullWidth
           label="Add tag"
           variant="outlined"
-          onChange={handleChangeTag(question.id)}
           onKeyDown={handleAddTag(question.id, question.tags ?? [])}/>
       <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
       <TableContainer component={Paper}>
@@ -149,7 +146,7 @@ const List = ({ questions }) => {
                 {String.fromCharCode(65 + i)}
               </TableCell>
               <TableCell>
-                {!!option.is_correct ? <CheckTwoTone color='success' /> : null}
+                {option.is_correct ? <CheckTwoTone color='success' /> : null}
               </TableCell>
               <TableCell>
                 <div dangerouslySetInnerHTML={{ __html: option.description }}></div>
@@ -161,8 +158,12 @@ const List = ({ questions }) => {
     </Paper>);
   };
 
+  QuestionDetails.propTypes = {
+    data: PropTypes.object.isRequired,
+  };
+
   return (
-    <>
+    <React.Fragment>
       <ButtonGroup>
         <Button onClick={handleAddQuestion}>
           <AddTwoTone /> Add Question
@@ -180,10 +181,24 @@ const List = ({ questions }) => {
         expandableRows
         pagination
         paginationServer />
-    </>
+    </React.Fragment>
   );
 };
 
-List.layout = page => <Layout children={page} title="Questions Bucket" />
+List.layout = page => (
+  <Layout title="Questions Bucket">
+    {page}
+  </Layout>
+)
+
+List.propTypes = {
+  questions: PropTypes.shape({
+    data: PropTypes.array.isRequired,
+    current_page: PropTypes.number.isRequired,
+    last_page: PropTypes.number.isRequired,
+    per_page: PropTypes.number,
+    total: PropTypes.number.isRequired,
+  }).isRequired,
+};
 
 export default List;

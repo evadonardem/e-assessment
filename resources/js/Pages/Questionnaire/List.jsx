@@ -4,10 +4,11 @@ import { router } from '@inertiajs/react';
 import { Box, Button, ButtonGroup, Dialog, DialogActions, DialogContent, DialogTitle, Icon, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { AddTwoTone, Check, DeleteForever, Edit, PreviewSharp } from '@mui/icons-material';
 import React from 'react';
-import generatePDF, { Margin, Resolution } from 'react-to-pdf';
+import generatePDF, { Margin } from 'react-to-pdf';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import PropTypes from 'prop-types';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -52,14 +53,13 @@ const List = ({ questionnaires }) => {
     },
     {
       name: '',
-      button: true,
       cell: row => (
         <ButtonGroup
           color="primary"
           size="small"
           variant="text">
           <Button onClick={handleEditQuestionnaire(row)}>
-            {!!!row.is_published ? <Edit /> : <PreviewSharp />}
+            {!row.is_published ? <Edit /> : <PreviewSharp />}
           </Button>
           <Button onClick={handleDeleteQuestionnaire(row)}>
             <DeleteForever />
@@ -189,10 +189,28 @@ const List = ({ questionnaires }) => {
           </Stack>
         </Box>
       </>}
-      {!!!questionnaire.is_published && <Typography>
+      {!questionnaire.is_published && <Typography>
         Publish questionnaire to create assessments.
       </Typography>}
     </Paper>);
+  };
+
+  QuestionDetails.propTypes = {
+    data: PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      title: PropTypes.string.isRequired,
+      is_published: PropTypes.bool,
+      assessments: PropTypes.arrayOf(
+        PropTypes.shape({
+          code: PropTypes.string.isRequired,
+          name: PropTypes.string.isRequired,
+          started_at: PropTypes.string,
+          submitted_at: PropTypes.string,
+          total_score: PropTypes.number,
+        })
+      ),
+      total_points: PropTypes.number,
+    }).isRequired,
   };
 
   return (
@@ -250,6 +268,20 @@ const List = ({ questionnaires }) => {
   );
 };
 
-List.layout = page => <Layout children={page} title="Questionnaires" />
+List.layout = page => (
+  <Layout title="Questionnaires">
+    {page}
+  </Layout>
+)
+
+List.propTypes = {
+  questionnaires: PropTypes.shape({
+    data: PropTypes.array.isRequired,
+    current_page: PropTypes.number.isRequired,
+    last_page: PropTypes.number.isRequired,
+    per_page: PropTypes.number,
+    total: PropTypes.number.isRequired,
+  }).isRequired,
+};
 
 export default List;

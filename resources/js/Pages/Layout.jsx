@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
   AccountCircleTwoTone,
   Dashboard,
@@ -25,9 +25,9 @@ import {
   Typography,
 } from '@mui/material';
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export default function Layout({ children, title }) {
-  const { auth } = usePage().props;
   const [openAppDrawer, setOpenAppDrawer] = React.useState(false);
   const [openUserDrawer, setOpenUserDrawer] = React.useState(false);
 
@@ -60,8 +60,8 @@ export default function Layout({ children, title }) {
             label: 'Dashboard',
             route: 'dashboard',
           },
-        ].map((item) => (
-          <ListItem disablePadding>
+        ].map((item, i) => (
+          <ListItem key={`menu-${i}`} disablePadding>
             <ListItemButton>
               <ListItemIcon>
                 {item.icon}
@@ -84,8 +84,8 @@ export default function Layout({ children, title }) {
             label: 'Questions',
             route: 'questions',
           }
-        ].map((item) => (
-          <ListItem disablePadding>
+        ].map((item, i) => (
+          <ListItem key={`menu-${i}`} disablePadding>
             <ListItemButton onClick={openAppModule(item.route)}>
               <ListItemIcon>
                 {item.icon}
@@ -136,7 +136,7 @@ export default function Layout({ children, title }) {
   );
 
   return (
-    <>
+    <React.Fragment>
       <Head>
         <title>{title}</title>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -164,7 +164,7 @@ export default function Layout({ children, title }) {
           </AppBar>
           <Toolbar />
         </React.Fragment>
-        <Paper maxWidth={false} elevation={1} sx={{ p: 2 }}>{children}</Paper>
+        <Paper elevation={1} sx={{ p: 2 }}>{children}</Paper>
       </Container>
       <Drawer anchor="left" open={openAppDrawer} onClose={toggleAppDrawer(false)}>
         {AppDrawerList}
@@ -172,6 +172,11 @@ export default function Layout({ children, title }) {
       <Drawer anchor="right" open={openUserDrawer} onClose={toggleUserDrawer(false)}>
         {UserDrawerList}
       </Drawer>
-    </>
+    </React.Fragment>
   );
+};
+
+Layout.propTypes = {
+  children: PropTypes.node.isRequired,
+  title: PropTypes.string.isRequired,
 };

@@ -2,6 +2,8 @@ import { Box, Button, Divider, Stack, Typography } from '@mui/material';
 import TakeAssessmentLayout from '../TakeAssessmentLayout';
 import { AccountBoxSharp, TopicSharp } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
+import PropTypes from 'prop-types';
+import React from 'react';
 
 const Show = ({ assessment }) => {
   const { questionnaire, name } = assessment;
@@ -20,7 +22,7 @@ const Show = ({ assessment }) => {
   };
 
   return (
-    <>
+    <React.Fragment>
       {questionnaire && <Box>
         <Stack direction="row" spacing={2}>
           <TopicSharp />
@@ -32,14 +34,14 @@ const Show = ({ assessment }) => {
         </Stack>
         <Divider />
         <Stack spacing={2}>
-          {sections.map((section) => (<Box>
+          {sections.map((section) => (<Box key={`section-${section.id}`}>
             <Typography>
               <div dangerouslySetInnerHTML={{ __html: section.description }}></div>
             </Typography>
 
             <Stack spacing={2}>
               {section.questions.map((question, i) => (
-                <Box>
+                <Box key={`section-${section.id}-question-${question.id}`}>
                   <Stack direction="row">
                     <Button
                       color="info"
@@ -54,7 +56,7 @@ const Show = ({ assessment }) => {
                   </Stack>
                   <Stack sx={{ ml: 8 }}>
                     {question.question_type_id === 1 && question.options.map((option, j) => (
-                      <Stack direction="row" spacing={2}>
+                      <Stack key={`section-${section.id}-question-${question.id}-option-${option.id}`} direction="row" spacing={2}>
                         <Button
                           onClick={handleAnswer(option)}
                           size="small"
@@ -74,10 +76,18 @@ const Show = ({ assessment }) => {
           </Box>))}
         </Stack>
       </Box>}
-    </>
+    </React.Fragment>
   );
 };
 
-Show.layout = page => <TakeAssessmentLayout children={page} title="Take Assessment" />
+Show.layout = page => (
+  <TakeAssessmentLayout title="Take Assessment">
+    {page}
+  </TakeAssessmentLayout>
+)
+
+Show.propTypes = {
+  assessment: PropTypes.object.isRequired,
+};
 
 export default Show;

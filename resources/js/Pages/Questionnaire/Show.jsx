@@ -32,6 +32,7 @@ import Layout from '../Layout';
 import React from 'react';
 import { BarChart, Gauge } from '@mui/x-charts';
 import generatePDF, { Margin } from 'react-to-pdf';
+import PropTypes from 'prop-types';
 
 const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
   const { section_id: sectionId, question_type_code: questionTypeCode, tags } = filters;
@@ -189,12 +190,12 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
     <Box id={`questionnaire-${questionnaire.id}`}>
       <Stack spacing={2} sx={{ mb: 2 }}>
         <Typography variant='h5'>{questionnaire.title}</Typography>
-        {!!!questionnaire.is_published ? <Editor
+        {!questionnaire.is_published ? <Editor
           onBlur={handleChangeQuestionnaireDescription}
           value={questionnaire.description} /> : <Typography>
           <div dangerouslySetInnerHTML={{ __html: questionnaire.description }}></div>
         </Typography>}
-        {!!!questionnaire.is_published && <ButtonGroup fullWidth variant="contained">
+        {!questionnaire.is_published && <ButtonGroup fullWidth variant="contained">
           <Button
             color="secondary"
             onClick={handleAddSection}
@@ -211,19 +212,19 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
       </Stack>
       <Stack direction="row" spacing={2}>
         {/* Questionnaire Sections */}
-        <Box width={!!questionnaire.is_published ? '100%' : '50%'}>
+        <Box width={questionnaire.is_published ? '100%' : '50%'}>
           {sections.map((section, i) => (<Accordion key={`section-${section.id}`} defaultExpanded>
             <AccordionSummary>
               <Typography sx={{ flexGrow: 1 }}>
                 {`Section ${i + 1}`}
               </Typography>
-              {!!!questionnaire.is_published && <IconButton onClick={handleDeleteSection(section.id)}>
+              {!questionnaire.is_published && <IconButton onClick={handleDeleteSection(section.id)}>
                 <DeleteTwoTone />
               </IconButton>}
             </AccordionSummary>
             <AccordionDetails>
               <Paper sx={{ mb: 2, p: 2 }} elevation={2}>
-                {!!!questionnaire.is_published ? <Editor
+                {!questionnaire.is_published ? <Editor
                   key={`section-description-${section.id}`}
                   onBlur={handleChangeSectionDescription(section.id)}
                   value={section.description} /> : <Typography>
@@ -232,7 +233,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
               </Paper>
               <Stack spacing={1}>
                 {section.questions.map((question, i) => (
-                  <Box>
+                  <Box key={`section-${section.id}-question-${question.id}`}>
                     <Stack direction="row" spacing={2}>
                       <Button
                         color="info"
@@ -249,10 +250,10 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                       <Grid container spacing={2}>
                         <Grid size={8}>
                           {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => (
-                            <Box sx={{ mb: 2 }}>
+                            <Box key={`section-${section.id}-question-${question.id}-option-${option.id}`} sx={{ mb: 2 }}>
                               <Stack direction="row" spacing={2}>
                                 <Button
-                                  color={!!option.is_correct ? "success" : "inherit"}
+                                  color={option.is_correct ? "success" : "inherit"}
                                   size="small"
                                   variant="contained">
                                   {`${String.fromCharCode(65 + j)}`}
@@ -266,10 +267,10 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                           {question.type.code.toLowerCase() === 'arq' && <Stack direction="row" spacing={2}>
                             <ButtonGroup variant="contained">
                               <Button
-                                color={!!question.is_true ? "success" : "inherit"}
+                                color={question.is_true ? "success" : "inherit"}
                                 size="small">True</Button>
                               <Button
-                                color={!!!question.is_true ? "success" : "inherit"}
+                                color={!question.is_true ? "success" : "inherit"}
                                 size="small">False</Button>
                             </ButtonGroup>
                           </Stack>}
@@ -303,9 +304,9 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
           </Accordion>))}
         </Box>
         {/* Questions Bucket */}
-        {!!!questionnaire.is_published && <Box width="50%">
+        {!questionnaire.is_published && <Box width="50%">
           <Paper elevation={1} sx={{ p: 2 }}>
-            {!!!questionnaire.is_published && !!sections.length && <Box sx={{ mt: 2, mb: 2 }}>
+            {!questionnaire.is_published && !!sections.length && <Box sx={{ mt: 2, mb: 2 }}>
               <Typography>Allocate Questions</Typography>
               <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
                 <FormControl fullWidth>
@@ -316,9 +317,9 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                     label='Section'
                     onChange={handleChangeFilteredSectionId}
                     value={filteredSectionId}>
-                    {sections.map((section, i) => (<MenuItem value={section.id}>
+                    {sections.map((section, i) => <MenuItem key={`questionnaire-section-${section.id}`} value={section.id}>
                       {`Section ${i + 1}`}
-                    </MenuItem>))}
+                    </MenuItem>)}
                   </Select>
                 </FormControl>
                 <FormControl fullWidth>
@@ -338,7 +339,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
               <Box sx={{ mb: 2 }}>
                 <Typography><FilterListSharp /> Filters</Typography>
                 <Stack spacing={2} sx={{ mb: 2 }}>
-                  {filteredTags.map((tag) => (<Chip label={tag} onDelete={handleDeleteFilterTag(tag)} />))}
+                  {filteredTags.map((tag, tagIndex) => <Chip key={`tag-${tagIndex}`} label={tag} onDelete={handleDeleteFilterTag(tag)} />)}
                 </Stack>
                 <TextField fullWidth label="Add tag filter" variant="outlined" onKeyDown={handleAddFilterTag} />
               </Box>
@@ -351,14 +352,14 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
               </Box>}
 
               <Stack>
-                {!!questions.data.length && questions.data.map((question) => (<Paper sx={{ mb: 2, p: 2 }}>
+                {!!questions.data.length && questions.data.map((question) => (<Paper key={`available-question-${question.id}`} sx={{ mb: 2, p: 2 }}>
                   <Stack spacing={1}>
                     <Typography>
                       <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
                     </Typography>
-                    {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, i) => (<Box sx={{ mb: 2 }}>
+                    {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, i) => (<Box key={`available-question-${question.id}-option-${option.id}`} sx={{ mb: 2 }}>
                       <Stack direction="row" spacing={2}>
-                        <Button color={!!option.is_correct ? "success" : "inherit"} variant="contained">
+                        <Button color={option.is_correct ? "success" : "inherit"} variant="contained">
                           {String.fromCharCode(65 + i)}
                         </Button>
                         <Typography>
@@ -371,12 +372,12 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                     </Box>
                     {question.type.code.toLowerCase() === 'arq' && <ButtonGroup>
                       <Button
-                        color={!!question.is_true ? "success" : "inherit"}
+                        color={question.is_true ? "success" : "inherit"}
                         variant="contained">
                         True
                       </Button>
                       <Button
-                        color={!!!question.is_true ? "success" : "inherit"}
+                        color={!question.is_true ? "success" : "inherit"}
                         variant="contained">
                         False
                       </Button>
@@ -407,6 +408,14 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
   </React.Fragment>);
 };
 
-Show.layout = page => <Layout children={page} title="Questionnaires" />
+Show.layout = page => <Layout title="Questionnaires">{page}</Layout>
+
+Show.propTypes = {
+  filters: PropTypes.object.isRequired,
+  questionnaire: PropTypes.object.isRequired,
+  questions: PropTypes.object.isRequired,
+  questionTypes: PropTypes.array.isRequired,
+  stats: PropTypes.object,
+};
 
 export default Show;

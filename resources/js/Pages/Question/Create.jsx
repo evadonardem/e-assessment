@@ -25,6 +25,7 @@ import {
 import Editor from 'jodit-react';
 import Layout from '../Layout';
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const Create = ({ question_types: questionTypes }) => {
   const [selectedQuestionType, setSelectedQuestionType] = React.useState(questionTypes[0]);
@@ -210,7 +211,7 @@ const Create = ({ question_types: questionTypes }) => {
                 name=""
                 value={selectedQuestionType.id}
                 onChange={handleChangeQuestionType}>
-                {questionTypes.map((type) => <MenuItem value={type.id}>
+                {questionTypes.map((type) => <MenuItem key={`question-type-${type.id}`} value={type.id}>
                   {type.description}
                 </MenuItem>)}
               </Select>
@@ -253,6 +254,14 @@ const Create = ({ question_types: questionTypes }) => {
   );
 };
 
-Create.layout = page => <Layout children={page} title="Create Question" />
+Create.layout = page => (
+  <Layout title="Create Question">
+    {page}
+  </Layout>
+)
+
+Create.propTypes = {
+  question_types: PropTypes.array.isRequired,
+};
 
 export default Create;
