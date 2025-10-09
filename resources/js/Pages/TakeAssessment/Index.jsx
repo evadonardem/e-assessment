@@ -123,8 +123,6 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
   const expiryTimestamp = new Date();
   expiryTimestamp.setSeconds(expiryTimestamp.getSeconds() + (timer?.remaining_time_in_seconds ?? 0));
 
-  console.log('Dave: ', expiryTimestamp);
-
   const { hours, minutes, seconds } = useTimer({
     expiryTimestamp,
     autoStart: !!questionnaire && !!timer,
@@ -205,22 +203,19 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
     document.body.oncut = () => false;
     document.body.onpaste = () => false;
 
-    // disable window zoom-in and zoom-out
-    document.addEventListener('keydown', (event) => {
-      if (event.ctrlKey == true && (
-        event.key == '0' ||
-        event.key == '-' ||
-        event.key == '+' ||
-        event.key == '='
-      )) {
-        event.preventDefault();
-      }
+    const eventTypes = ['keydown', 'keyup', 'keypress', 'wheel'];
+    eventTypes.forEach((eventType) => {
+      document.addEventListener(eventType, (event) => {
+        if (
+          event.altKey === true ||
+          event.ctrlKey === true ||
+          event.metaKey === true ||
+          (event.key.startsWith('F') && event.key.length <= 3)
+        ) {
+          event.preventDefault();
+        }
+      }, { passive: false });
     });
-    document.addEventListener('wheel', (event) => {
-      if (event.ctrlKey) {
-        event.preventDefault();
-      }
-    }, { passive: false });
 
     // check screen size
     window.onresize = () => {
