@@ -4,7 +4,6 @@ import {
   AlarmTwoTone,
   Block,
   CenterFocusStrong,
-  Circle,
   HighlightOffTwoTone,
   Monitor,
   PsychologyTwoTone,
@@ -209,6 +208,14 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
       </Box>
     </Stack>
   </Box>;
+};
+
+SectionQuestion.propTypes = {
+  assessment: PropTypes.object.isRequired,
+  section: PropTypes.object.isRequired,
+  question: PropTypes.object.isRequired,
+  i: PropTypes.number.isRequired,
+  answers: PropTypes.array.isRequired,
 };
 
 const Index = ({ assessment, answers, errors, timer, attempts }) => {
@@ -492,7 +499,13 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
             </Paper>
             <Stack spacing={2}>
               {section.questions.map((question, i) => (
-                <SectionQuestion assessment={assessment} section={section} question={question} i={i} answers={answers} />
+                <SectionQuestion
+                  key={`section-${section.id}-question-${question.id}`}
+                  assessment={assessment}
+                  section={section}
+                  question={question}
+                  i={i}
+                  answers={answers} />
               ))}
             </Stack>
           </Box>))}

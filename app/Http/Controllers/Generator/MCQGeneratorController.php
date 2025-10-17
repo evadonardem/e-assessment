@@ -12,8 +12,7 @@ class MCQGeneratorController extends Controller
 {
     public function __construct(
         protected GeminiApiService $geminiApiService
-    ) {
-    }
+    ) {}
 
     public function create()
     {
@@ -33,7 +32,7 @@ class MCQGeneratorController extends Controller
     public function store(Request $request)
     {
         Storage::disk('local')->put(
-            '/mcq_data_feed/generated_mcq_' . time() . '.json',
+            '/mcq_data_feed/generated_mcq_'.time().'.json',
             $request->input('questions')
         );
     }

@@ -2,15 +2,14 @@
 
 namespace App\Services;
 
-use App\Repositories\QuestionTypeRepository;
-use Exception;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 
 class GeminiApiService
 {
     private const DEFAULT_COMPLEXITY_LEVELS = ['easy', 'medium', 'hard'];
+
     private const DEFAULT_ITEMS_COUNT = 5;
+
     private const GEMINI_API_URL =
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
@@ -38,10 +37,9 @@ class GeminiApiService
             'x-goog-api-key' => env('GEMINI_API_KEY'),
             'Content-Type' => 'application/json',
         ])->post(self::GEMINI_API_URL, [
-            "system_instruction" => [
-                "parts" => [
-                    "text" =>
-                    <<<SYSTEM_INSTRUCTION
+            'system_instruction' => [
+                'parts' => [
+                    'text' => <<<'SYSTEM_INSTRUCTION'
                     Avoid options like "All of the above" or "None of the above".
                     Ensure that all options are plausible to avoid making the correct answer obvious.
                     Ensure that the questions and options are clear and unambiguous.
@@ -53,19 +51,19 @@ class GeminiApiService
                     SYSTEM_INSTRUCTION
                 ],
             ],
-            "contents" => [
-                "parts" => [
-                    "text" => $prompts
+            'contents' => [
+                'parts' => [
+                    'text' => $prompts,
                 ],
             ],
-            "generationConfig" => [
-                "responseMimeType" => "application/json",
-                "thinkingConfig" => [
-                    "thinkingBudget" => 0,
+            'generationConfig' => [
+                'responseMimeType' => 'application/json',
+                'thinkingConfig' => [
+                    'thinkingBudget' => 0,
                 ],
             ],
         ]);
-        
+
         if ($response->failed()) {
             return $response->json('error');
         }

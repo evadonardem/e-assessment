@@ -1,8 +1,9 @@
 import { keyBy } from 'lodash';
-import { Box, Divider, Grid, Paper, Stack, Typography } from '@mui/material';
+import { Box, Divider, Grid, Stack, Typography } from '@mui/material';
 import Layout from '../../Layout';
 import React from 'react';
-import { CheckBox, DisabledByDefault, Password, Person, Quiz, Receipt, Score } from '@mui/icons-material';
+import { CheckBox, DisabledByDefault, Password, Person, Quiz, Receipt } from '@mui/icons-material';
+import PropTypes from 'prop-types';
 
 const Show = ({ assessment, result }) => {
   const {
@@ -105,7 +106,11 @@ const Show = ({ assessment, result }) => {
       })}
   </React.Fragment>;
 };
+Show.propTypes = {
+  assessment: PropTypes.object.isRequired,
+  result: PropTypes.object.isRequired,
+};
 
-Show.layout = page => <Layout children={page} title="Assessment Result" />
+Show.layout = page => <Layout title="Assessment Result">{page}</Layout>
 
 export default Show;
