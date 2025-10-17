@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Question;
 use App\Models\QuestionType;
+use App\Services\GeminiApiService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -11,6 +12,10 @@ use Inertia\Inertia;
 
 class QuestionController extends Controller
 {
+    public function __construct(
+        protected GeminiApiService $geminiApiService
+    ) {}
+
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);

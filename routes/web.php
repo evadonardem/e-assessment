@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Generator\MCQGeneratorController;
 use App\Http\Controllers\Importer\AlternateResponseQuestionImporter;
 use App\Http\Controllers\Importer\MultipleChoiceQuestionImporter;
 use App\Http\Controllers\LaunchAssessmentController;
@@ -69,6 +70,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/{question}', [QuestionController::class, 'show']);
         Route::delete('/{question}', [QuestionController::class, 'destroy']);
     });
+
+    // Google Gemini API
+    Route::get('/generator/mcq/create', [MCQGeneratorController::class, 'create'])->name('generator.mcq.create');
+    Route::post('/generator/mcq/generate', [MCQGeneratorController::class, 'generate']);
+    Route::post('/generator/mcq/store', [MCQGeneratorController::class, 'store']);
 
     Route::group(['prefix' => 'importer'], function () {
         Route::get(

@@ -2,10 +2,14 @@ import { Head, router, usePage } from '@inertiajs/react';
 import {
   AccountCircleTwoTone,
   AlarmTwoTone,
+  Block,
   CenterFocusStrong,
+  Circle,
   HighlightOffTwoTone,
   Monitor,
   PsychologyTwoTone,
+  RadioButtonChecked,
+  RadioButtonUnchecked,
   SchoolTwoTone,
   SendSharp,
   TimerTwoTone,
@@ -32,7 +36,7 @@ import {
   Toolbar,
   Typography
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
 import PropTypes from 'prop-types';
 
@@ -99,6 +103,114 @@ StayFocusedDialog.propTypes = {
   onContinue: PropTypes.func.isRequired,
 };
 
+const SectionQuestion = ({ assessment, section, question, i, answers }) => {
+  const [obscured, setObscured] = useState(true);
+
+  const handleAnswer = (section, option) => (e) => {
+    e.preventDefault();
+    router.post('/answers', {
+      code: assessment.code,
+      questionnaire_section_id: section.id,
+      question_id: option.question_id,
+      option_id: option.id,
+    }, {
+      preserveScroll: true,
+    });
+  };
+
+  const handleAnswerAlternateResponseQuestion = (section, question, ans) => (e) => {
+    e.preventDefault();
+    router.post('/answers', {
+      code: assessment.code,
+      questionnaire_section_id: section.id,
+      question_id: question.id,
+      is_true: ans,
+    }, {
+      preserveScroll: true,
+    });
+  };
+
+  return <Box
+    key={`section-${section.id}-question-${question.id}`}
+    onMouseOver={useCallback(() => setObscured(false), [])}
+    onMouseOut={useCallback(() => setObscured(true), [])}
+  >
+    <Stack direction="row" spacing={1}>
+      <Button
+        color="inherit"
+        startIcon={answers.find((ans) => ans.questionnaire_section_id == section.id &&
+          ans.question_id == question.id) ? <RadioButtonChecked color="action" /> : <RadioButtonUnchecked color="action" />}
+        variant="text"
+        size="large"
+        sx={{ p: 0 }}
+      >
+        {`${i + 1}`}.
+      </Button>
+      <Box
+        width="95%"
+        sx={{
+          WebkitTouchCallout: "none",
+          WebkitUserSelect: "none",
+          KhtmlUserSelect: "none",
+          MozUserSelect: "none",
+          msUserSelect: "none",
+          userSelect: "none"
+        }}
+      >
+        {obscured ?
+          <Typography overflow="hidden" textOverflow="ellipsis">
+            {btoa((new TextEncoder()).encode(question.description))}
+          </Typography> : <Box>
+            <Typography>
+              <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
+            </Typography>
+            <Stack>
+              {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => (
+                <Stack key={`section-${section.id}-question-${question.id}-option-${option.id}`} direction="row" spacing={2}>
+                  <Button
+                    color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
+                      ans.question_id == question.id &&
+                      ans.option_id == option.id) ? "primary" : "inherit"}
+                    onClick={handleAnswer(section, option)}
+                    size="small"
+                    variant="contained">
+                    {`${String.fromCharCode(65 + j)}`}
+                  </Button>
+                  <Typography sx={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", KhtmlUserSelect: "none", MozUserSelect: "none", msUserSelect: "none", userSelect: "none" }}>
+                    <div dangerouslySetInnerHTML={{ __html: option.description }}></div>
+                  </Typography>
+                </Stack>
+              ))}
+              {question.type.code.toLowerCase() === 'arq' && <ButtonGroup
+                fullWidth
+                sx={{ width: "25%" }}
+                variant="contained">
+                <Button
+                  color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
+                    ans.question_id == question.id &&
+                    ans.is_true !== null &&
+                    !!ans.is_true) ? "primary" : "inherit"}
+                  onClick={handleAnswerAlternateResponseQuestion(section, question, true)}
+                  size="small">
+                  True
+                </Button>
+                <Button
+                  color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
+                    ans.question_id == question.id &&
+                    ans.is_true !== null &&
+                    !ans.is_true) ? "primary" : "inherit"}
+                  onClick={handleAnswerAlternateResponseQuestion(section, question, false)}
+                  size="small">
+                  False
+                </Button>
+              </ButtonGroup>}
+            </Stack>
+          </Box>}
+      </Box>
+    </Stack>
+  </Box>;
+};
+
 const Index = ({ assessment, answers, errors, timer, attempts }) => {
 
   const [isScreenSizeTooSmall, setIsScreenSizeTooSmall] = useState(
@@ -134,30 +246,6 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
     },
   });
 
-  const handleAnswer = (section, option) => (e) => {
-    e.preventDefault();
-    router.post('/answers', {
-      code: assessment.code,
-      questionnaire_section_id: section.id,
-      question_id: option.question_id,
-      option_id: option.id,
-    }, {
-      preserveScroll: true,
-    });
-  };
-
-  const handleAnswerAlternateResponseQuestion = (section, question, ans) => (e) => {
-    e.preventDefault();
-    router.post('/answers', {
-      code: assessment.code,
-      questionnaire_section_id: section.id,
-      question_id: question.id,
-      is_true: ans,
-    }, {
-      preserveScroll: true,
-    });
-  };
-
   const handleSubmitAssessment = (e) => {
     e.preventDefault();
     router.post('/submit-assessment', {
@@ -190,6 +278,7 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
     setShowReminder(true);
   };
 
+  const [dimScreen, setDimScreen] = useState(false);
   useEffect(() => {
     // disable text selection, cut, copy and paste
     document.body.style.WebkitTouchCallout = 'none';
@@ -203,16 +292,22 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
     document.body.oncut = () => false;
     document.body.onpaste = () => false;
 
-    const eventTypes = ['keydown', 'keyup', 'keypress', 'wheel'];
+    const eventTypes = ['keydown', 'wheel'];
     eventTypes.forEach((eventType) => {
       document.addEventListener(eventType, (event) => {
         if (
           event.altKey === true ||
           event.ctrlKey === true ||
-          event.metaKey === true ||
-          (event.key.startsWith('F') && event.key.length <= 3)
+          event.metaKey === true
+          // ||
+          // (
+          //   event.key.startsWith('F') &&
+          //   event.key.length >= 2 &&
+          //   event.key.length <= 3
+          // )
         ) {
           event.preventDefault();
+          assessment && setDimScreen(true);
         }
       }, { passive: false });
     });
@@ -229,7 +324,7 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
         setShowReminder(false);
       }
     };
-  }, []);
+  }, [dimScreen]);
 
   useEffect(() => {
     document.onmouseleave = () => {
@@ -254,6 +349,38 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
     }
     return () => window.removeEventListener("visibilitychange", handleVisibilityChangeAssessment);
   }, [assessment, handleVisibilityChangeAssessment])
+
+  if (dimScreen) {
+    return <Box
+      position="fixed"
+      top={0}
+      left={0}
+      width="100vw"
+      height="100vh"
+      bgcolor="maroon"
+      color="white"
+      display="flex"
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
+      zIndex={1300}
+    >
+      <Block sx={{ fontSize: 175 }} />
+      <Typography width="80%" variant="h5" align="center">
+        Keyboard shortcuts and function keys are disabled during the assessment.
+        Please refrain from using them to ensure a smooth and uninterrupted experience.
+        If you need to use these functions, please exit the assessment first.
+      </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        sx={{ mt: 2 }}
+        onClick={() => setDimScreen(false)}
+      >
+        Return to Assessment
+      </Button>
+    </Box>;
+  }
 
   return (
     <Container>
@@ -365,60 +492,7 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
             </Paper>
             <Stack spacing={2}>
               {section.questions.map((question, i) => (
-                <Box key={`section-${section.id}-question-${question.id}`}>
-                  <Stack direction="row">
-                    <Button
-                      disabled
-                      size="large"
-                      variant="text">
-                      {`${i + 1}`}
-                    </Button>
-                    <Typography sx={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", KhtmlUserSelect: "none", MozUserSelect: "none", msUserSelect: "none", userSelect: "none" }}>
-                      <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
-                    </Typography>
-                  </Stack>
-                  <Stack sx={{ ml: 8 }}>
-                    {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => (
-                      <Stack key={`section-${section.id}-question-${question.id}-option-${option.id}`} direction="row" spacing={2}>
-                        <Button
-                          color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-                            ans.question_id == question.id &&
-                            ans.option_id == option.id) ? "primary" : "inherit"}
-                          onClick={handleAnswer(section, option)}
-                          size="small"
-                          variant="contained">
-                          {`${String.fromCharCode(65 + j)}`}
-                        </Button>
-                        <Typography sx={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", KhtmlUserSelect: "none", MozUserSelect: "none", msUserSelect: "none", userSelect: "none" }}>
-                          <div dangerouslySetInnerHTML={{ __html: option.description }}></div>
-                        </Typography>
-                      </Stack>
-                    ))}
-                    {question.type.code.toLowerCase() === 'arq' && <ButtonGroup
-                      fullWidth
-                      sx={{ width: "25%" }}
-                      variant="contained">
-                      <Button
-                        color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-                          ans.question_id == question.id &&
-                          ans.is_true !== null &&
-                          !!ans.is_true) ? "primary" : "inherit"}
-                        onClick={handleAnswerAlternateResponseQuestion(section, question, true)}
-                        size="small">
-                        True
-                      </Button>
-                      <Button
-                        color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-                          ans.question_id == question.id &&
-                          ans.is_true !== null &&
-                          !ans.is_true) ? "primary" : "inherit"}
-                        onClick={handleAnswerAlternateResponseQuestion(section, question, false)}
-                        size="small">
-                        False
-                      </Button>
-                    </ButtonGroup>}
-                  </Stack>
-                </Box>
+                <SectionQuestion assessment={assessment} section={section} question={question} i={i} answers={answers} />
               ))}
             </Stack>
           </Box>))}

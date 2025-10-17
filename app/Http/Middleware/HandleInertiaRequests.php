@@ -43,6 +43,9 @@ class HandleInertiaRequests extends Middleware
             'flashMessage' => [
                 'submit' => request()->session()->get('submit'),
             ],
+            'generator' => [
+                'mcq_generated_questions' => request()->session()->get('mcq_generated_questions'),
+            ],
         ]);
     }
 }
