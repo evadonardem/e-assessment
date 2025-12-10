@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class GeminiApiService
 {
@@ -18,7 +19,7 @@ class GeminiApiService
         int $itemsCount = self::DEFAULT_ITEMS_COUNT,
         array $complexityLevels = self::DEFAULT_COMPLEXITY_LEVELS,
         string $extraInstructions = ''
-    ): string {
+    ): ?string {
         $levels = implode(', ', $complexityLevels);
         $prompts =
         <<<PROMPTS
@@ -36,7 +37,7 @@ class GeminiApiService
         $response = Http::withHeaders([
             'x-goog-api-key' => env('GEMINI_API_KEY'),
             'Content-Type' => 'application/json',
-        ])->post(self::GEMINI_API_URL, [
+        ])->timeout(60)->post(self::GEMINI_API_URL, [
             'system_instruction' => [
                 'parts' => [
                     'text' => <<<'SYSTEM_INSTRUCTION'
@@ -65,7 +66,12 @@ class GeminiApiService
         ]);
 
         if ($response->failed()) {
-            return $response->json('error');
+            Log::error('Gemini API request failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
         }
 
         return $response->json('candidates.0.content.parts.0.text');

@@ -69,7 +69,7 @@ class MultipleChoiceQuestionImporter extends Controller
 
     public function dataFeed()
     {
-        $files = Storage::disk('local')->files('data_feeds');
+        $files = Storage::disk('local')->files('mcq_data_feed');
         foreach ($files as $path) {
             $storagePath = Storage::disk('local')->path($path);
             $tag = Str::of($storagePath)->explode('/');
