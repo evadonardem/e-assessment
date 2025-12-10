@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const Create = () => {
-  const { generator: { mcq_generated_questions } } = usePage().props;
+  const { errors, generator: { mcq_generated_questions } } = usePage().props;
   const handleGenerateQuestions = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -50,15 +50,37 @@ const Create = () => {
               variant='outlined'
               fullWidth
               margin='normal'
+              size='small'
+              error={!!errors.topic}
+              helperText={errors.topic}
             />
 
-            <FormLabel sx={{ mr: 2 }}>Complexity Levels:</FormLabel>
+            <TextField
+              name='items_count'
+              label='Number of Items'
+              variant='outlined'
+              fullWidth
+              margin='normal'
+              type='number'
+              size='small'
+              slotProps={{
+                input: { min: 1, max: 50 }
+              }}
+              error={!!errors.items_count}
+              helperText={errors.items_count}
+            />
+
+            <Divider sx={{ my: 2 }} />
+
+            <FormLabel>Complexity Levels:</FormLabel>
             <FormGroup row>
               <FormControlLabel name='easy' control={<Checkbox />} label="Easy" />
               <FormControlLabel name='medium' control={<Checkbox />} label="Medium" />
               <FormControlLabel name='hard' control={<Checkbox />} label="Hard" />
             </FormGroup>
-
+            {!!errors.complexity_levels && (
+              <Typography color='error' variant='body2'>{errors.complexity_levels}</Typography>
+            )}
 
             <ButtonGroup sx={{ mt: 2 }}>
               <Button

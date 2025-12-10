@@ -4,16 +4,16 @@ import {
   AlarmTwoTone,
   Block,
   CenterFocusStrong,
+  CheckBox,
+  CheckBoxOutlineBlank,
   HighlightOffTwoTone,
   Monitor,
   PsychologyTwoTone,
-  RadioButtonChecked,
-  RadioButtonUnchecked,
   SchoolTwoTone,
   SendSharp,
   TimerTwoTone,
   TopicSharp,
-  VisibilityTwoTone
+  VisibilityTwoTone,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -23,21 +23,25 @@ import {
   Button,
   ButtonGroup,
   Container,
+  createTheme,
   Dialog,
   DialogActions,
   DialogContent,
   Divider,
   IconButton,
   Paper,
+  Skeleton,
   Snackbar,
   Stack,
   TextField,
+  ThemeProvider,
   Toolbar,
   Typography
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
 import PropTypes from 'prop-types';
+import { red } from '@mui/material/colors';
 
 const ALLOWED_BASE_SCREEN_SIZE_RATIO = {
   width: 0.98,
@@ -94,7 +98,7 @@ const StayFocusedDialog = ({ onContinue }) => <Dialog open fullScreen>
     </Alert>
   </DialogContent>
   <DialogActions>
-    <Button type="submit" onClick={onContinue}>Continue</Button>
+    <Button type="submit" variant="contained" onClick={onContinue}>Continue</Button>
   </DialogActions>
 </Dialog>;
 
@@ -129,16 +133,57 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
     });
   };
 
-  return <Box
+  const QuestionOption = ({ option, j }) => {
+    const [optionObscured, setOptionObscured] = useState(true);
+    const handleOptionObscured = useCallback((isObscured) => {
+      setOptionObscured(isObscured);
+    }, []);
+
+    return <Stack
+      alignItems="flex-start"
+      direction="row"
+      spacing={2}
+      marginBottom={1}
+      onMouseEnter={() => handleOptionObscured(false)}
+      onMouseLeave={() => handleOptionObscured(true)}
+    >
+      <Button
+        disableElevation
+        color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
+          ans.question_id == question.id &&
+          ans.option_id == option.id) ? "primary" : "inherit"}
+        onClick={handleAnswer(section, option)}
+        size="small"
+        variant="contained">
+        {`${String.fromCharCode(65 + j)}`}
+      </Button>
+
+      {optionObscured ? <Skeleton animation={false} variant="rectangular" height={30} width="100%" />
+        : <Typography sx={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", KhtmlUserSelect: "none", MozUserSelect: "none", msUserSelect: "none", userSelect: "none" }}>
+          <div dangerouslySetInnerHTML={{ __html: option.description }}></div>
+        </Typography>}
+    </Stack>;
+  };
+
+  QuestionOption.propTypes = {
+    option: PropTypes.object.isRequired,
+    j: PropTypes.number.isRequired,
+  };
+
+  return <Paper
     key={`section-${section.id}-question-${question.id}`}
-    onMouseOver={useCallback(() => setObscured(false), [])}
-    onMouseOut={useCallback(() => setObscured(true), [])}
+    variant="outlined"
+    elevation={0}
+    onMouseEnter={useCallback(() => setObscured(false), [])}
+    onMouseLeave={useCallback(() => setObscured(true), [])}
+    sx={{ p: 1 }}
+    square
   >
-    <Stack direction="row" spacing={1}>
+    <Stack alignItems="flex-start" direction="row" spacing={1}>
       <Button
         color="inherit"
         startIcon={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-          ans.question_id == question.id) ? <RadioButtonChecked color="action" /> : <RadioButtonUnchecked color="action" />}
+          ans.question_id == question.id) ? <CheckBox color="primary" /> : <CheckBoxOutlineBlank />}
         variant="text"
         size="large"
         sx={{ p: 0 }}
@@ -156,58 +201,45 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
           userSelect: "none"
         }}
       >
-        {obscured ?
-          <Typography overflow="hidden" textOverflow="ellipsis">
-            {btoa((new TextEncoder()).encode(question.description))}
-          </Typography> : <Box>
-            <Typography>
-              <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
-            </Typography>
-            <Stack>
-              {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => (
-                <Stack key={`section-${section.id}-question-${question.id}-option-${option.id}`} direction="row" spacing={2}>
-                  <Button
-                    color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-                      ans.question_id == question.id &&
-                      ans.option_id == option.id) ? "primary" : "inherit"}
-                    onClick={handleAnswer(section, option)}
-                    size="small"
-                    variant="contained">
-                    {`${String.fromCharCode(65 + j)}`}
-                  </Button>
-                  <Typography sx={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", KhtmlUserSelect: "none", MozUserSelect: "none", msUserSelect: "none", userSelect: "none" }}>
-                    <div dangerouslySetInnerHTML={{ __html: option.description }}></div>
-                  </Typography>
-                </Stack>
-              ))}
-              {question.type.code.toLowerCase() === 'arq' && <ButtonGroup
-                fullWidth
-                sx={{ width: "25%" }}
-                variant="contained">
-                <Button
-                  color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-                    ans.question_id == question.id &&
-                    ans.is_true !== null &&
-                    !!ans.is_true) ? "primary" : "inherit"}
-                  onClick={handleAnswerAlternateResponseQuestion(section, question, true)}
-                  size="small">
-                  True
-                </Button>
-                <Button
-                  color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-                    ans.question_id == question.id &&
-                    ans.is_true !== null &&
-                    !ans.is_true) ? "primary" : "inherit"}
-                  onClick={handleAnswerAlternateResponseQuestion(section, question, false)}
-                  size="small">
-                  False
-                </Button>
-              </ButtonGroup>}
-            </Stack>
-          </Box>}
+        {obscured ? <Skeleton animation={false} variant="rectangular" height={40} width="100%" /> : <Box>
+          <Typography>
+            <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
+          </Typography>
+          <Divider sx={{ my: 2 }} />
+          <Stack>
+            {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => (
+              <QuestionOption
+                key={`section-${section.id}-question-${question.id}-option-${j}`}
+                option={option} j={j} />
+            ))}
+            {question.type.code.toLowerCase() === 'arq' && <ButtonGroup
+              fullWidth
+              sx={{ width: "25%" }}
+              variant="contained">
+              <Button
+                color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
+                  ans.question_id == question.id &&
+                  ans.is_true !== null &&
+                  !!ans.is_true) ? "primary" : "inherit"}
+                onClick={handleAnswerAlternateResponseQuestion(section, question, true)}
+                size="small">
+                True
+              </Button>
+              <Button
+                color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
+                  ans.question_id == question.id &&
+                  ans.is_true !== null &&
+                  !ans.is_true) ? "primary" : "inherit"}
+                onClick={handleAnswerAlternateResponseQuestion(section, question, false)}
+                size="small">
+                False
+              </Button>
+            </ButtonGroup>}
+          </Stack>
+        </Box>}
       </Box>
     </Stack>
-  </Box>;
+  </Paper>;
 };
 
 SectionQuestion.propTypes = {
@@ -217,6 +249,40 @@ SectionQuestion.propTypes = {
   i: PropTypes.number.isRequired,
   answers: PropTypes.array.isRequired,
 };
+
+const AsssementTimer = ({ assessment, questionnaire, timer }) => {
+  if (!timer) {
+    return null;
+  }
+
+  const expiryTimestamp = new Date();
+  const { hours, minutes, seconds } = useTimer({
+    expiryTimestamp,
+    autoStart: !!questionnaire && !!timer,
+    onExpire: () => {
+      router.post('/submit-assessment', {
+        code: assessment.code,
+        timeExpired: 1,
+      });
+    },
+  });
+  expiryTimestamp.setSeconds(expiryTimestamp.getSeconds() + (timer?.remaining_time_in_seconds ?? 0));
+
+  return <Stack direction="row" alignContent="center" alignItems="center">
+    <IconButton color="inherit">
+      <AlarmTwoTone />
+    </IconButton>
+    <Typography variant="h4">
+      {`${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`}
+    </Typography>
+  </Stack>;
+};
+
+AsssementTimer.propTypes = {
+  assessment: PropTypes.object.isRequired,
+  questionnaire: PropTypes.object.isRequired,
+  timer: PropTypes.object.isRequired,
+}
 
 const Index = ({ assessment, answers, errors, timer, attempts }) => {
 
@@ -238,20 +304,6 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
 
   const maxAssessmentBlurAttempts = attempts?.max;
   const [showReminder, setShowReminder] = React.useState(false);
-
-  const expiryTimestamp = new Date();
-  expiryTimestamp.setSeconds(expiryTimestamp.getSeconds() + (timer?.remaining_time_in_seconds ?? 0));
-
-  const { hours, minutes, seconds } = useTimer({
-    expiryTimestamp,
-    autoStart: !!questionnaire && !!timer,
-    onExpire: () => {
-      router.post('/submit-assessment', {
-        code: assessment.code,
-        timeExpired: 1,
-      });
-    },
-  });
 
   const handleSubmitAssessment = (e) => {
     e.preventDefault();
@@ -357,119 +409,136 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
     return () => window.removeEventListener("visibilitychange", handleVisibilityChangeAssessment);
   }, [assessment, handleVisibilityChangeAssessment])
 
+  const theme = createTheme({
+    palette: {
+      primary: {
+        main: red[900],
+      },
+    },
+  });
+
   if (dimScreen) {
-    return <Box
-      position="fixed"
-      top={0}
-      left={0}
-      width="100vw"
-      height="100vh"
-      bgcolor="maroon"
-      color="white"
-      display="flex"
-      flexDirection="column"
-      justifyContent="center"
-      alignItems="center"
-      zIndex={1300}
-    >
-      <Block sx={{ fontSize: 175 }} />
-      <Typography width="80%" variant="h5" align="center">
-        Keyboard shortcuts and function keys are disabled during the assessment.
-        Please refrain from using them to ensure a smooth and uninterrupted experience.
-        If you need to use these functions, please exit the assessment first.
-      </Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        sx={{ mt: 2 }}
-        onClick={() => setDimScreen(false)}
+    return <ThemeProvider theme={theme}>
+      <Box
+        position="fixed"
+        top={0}
+        left={0}
+        width="100vw"
+        height="100vh"
+        bgcolor="maroon"
+        color="white"
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        zIndex={1300}
       >
-        Return to Assessment
-      </Button>
-    </Box>;
+        <Block sx={{ fontSize: 175 }} />
+        <Typography width="80%" variant="h5" align="center">
+          Keyboard shortcuts and function keys are disabled during the assessment.
+          Please refrain from using them to ensure a smooth and uninterrupted experience.
+          If you need to use these functions, please exit the assessment first.
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ mt: 2 }}
+          onClick={() => {
+            router.reload({
+              preserveScroll: true,
+              onSuccess: () => setDimScreen(false),
+            });
+          }}
+        >
+          Return to Assessment
+        </Button>
+      </Box>
+    </ThemeProvider>;
   }
 
   return (
-    <Container>
-      {!assessment && <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="90vh"
-      >
-        <Head>
-          <title>Start</title>
-        </Head>
-        <Box
-          component="form"
-          textAlign="center"
-          onSubmit={handleTakeAssessment}
-          noValidate sx={{ mt: 1 }}
+    <ThemeProvider theme={theme}>
+      <Container maxWidth={false}>
+        {!assessment && <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="90vh"
         >
-          <Avatar sx={{ m: "auto", bgcolor: 'secondary.main' }}>
-            <TopicSharp />
-          </Avatar>
-          <Typography component="h1" variant="h5">
-            Take Assessment
-          </Typography>
-          <Divider sx={{ my: 2 }} />
-          <TextField
-            error={!!errors.code}
-            helperText={errors?.code}
-            margin="normal"
-            required
-            fullWidth
-            label="Code"
-            name="code"
-            autoComplete={false}
-            autoFocus
-          />
-          <Divider sx={{ my: 2 }} />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+          <Head>
+            <title>Start</title>
+          </Head>
+          <Box
+            component="form"
+            textAlign="center"
+            onSubmit={handleTakeAssessment}
+            noValidate sx={{ mt: 1 }}
           >
-            Start
-          </Button>
-        </Box>
+            <Avatar sx={{ m: "auto", bgcolor: 'secondary.main' }}>
+              <TopicSharp />
+            </Avatar>
+            <Typography component="h1" variant="h5">
+              Take Assessment
+            </Typography>
+            <Divider sx={{ my: 2 }} />
+            <TextField
+              error={!!errors.code}
+              helperText={errors?.code}
+              margin="normal"
+              required
+              fullWidth
+              label="Code"
+              name="code"
+              autoComplete={false}
+              autoFocus
+            />
+            <Divider sx={{ my: 2 }} />
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+            >
+              Start
+            </Button>
+          </Box>
 
-        {!!flashMessageSubmit && <Snackbar
-          open={openFlashMessageSubmit}
-          autoHideDuration={5000}
-          anchorOrigin={{ horizontal: "center", vertical: "top" }}
-          onClose={() => setOpenFlashMessageSubmit(false)}>
-          <Alert
-            severity={flashMessageSubmit.severity}>
-            {flashMessageSubmit.message}
-          </Alert>
-        </Snackbar>}
+          {!!flashMessageSubmit && <Snackbar
+            open={openFlashMessageSubmit}
+            autoHideDuration={5000}
+            anchorOrigin={{ horizontal: "center", vertical: "top" }}
+            onClose={() => setOpenFlashMessageSubmit(false)}>
+            <Alert
+              severity={flashMessageSubmit.severity}>
+              {flashMessageSubmit.message}
+            </Alert>
+          </Snackbar>}
 
-      </Box>}
+        </Box>}
 
-      {questionnaire && <>
-        <Head>
-          <title>{`${name} (${assessment.code})`}</title>
-        </Head>
-        <React.Fragment>
-          <AppBar position="fixed">
-            <Toolbar>
-              <Stack sx={{ flexGrow: 1 }}>
-                <Stack direction="row" alignContent="center" alignItems="center">
-                  <IconButton color="inherit">
-                    <AccountCircleTwoTone />
-                  </IconButton>
-                  <Typography sx={{ flexGrow: 1 }} variant="h5">{name}</Typography>
+        {questionnaire && <>
+          <Head>
+            <title>{`${name} (${assessment.code})`}</title>
+          </Head>
+          <React.Fragment>
+            <AppBar position="fixed">
+              <Toolbar>
+                <Stack sx={{ flexGrow: 1 }}>
+                  <Stack direction="row" alignContent="center" alignItems="center">
+                    <IconButton color="inherit">
+                      <AccountCircleTwoTone />
+                    </IconButton>
+                    <Typography sx={{ flexGrow: 1 }} variant="h5">{name}</Typography>
+                  </Stack>
+                  <Stack direction="row" alignContent="center" alignItems="center">
+                    <IconButton color="inherit">
+                      <TopicSharp />
+                    </IconButton>
+                    <Typography sx={{ flexGrow: 1 }} variant="subtitle1">{questionnaireTitle}</Typography>
+                  </Stack>
                 </Stack>
-                <Stack direction="row" alignContent="center" alignItems="center">
-                  <IconButton color="inherit">
-                    <TopicSharp />
-                  </IconButton>
-                  <Typography sx={{ flexGrow: 1 }} variant="subtitle1">{questionnaireTitle}</Typography>
-                </Stack>
-              </Stack>
-              {timer &&
+                <AsssementTimer assessment={assessment} questionnaire={questionnaire} timer={timer} />
+                {/* {timer &&
                 <Stack direction="row" alignContent="center" alignItems="center">
                   <IconButton color="inherit">
                     <AlarmTwoTone />
@@ -477,53 +546,54 @@ const Index = ({ assessment, answers, errors, timer, attempts }) => {
                   <Typography variant="h4">
                     {`${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`}
                   </Typography>
-                </Stack>}
-            </Toolbar>
-          </AppBar>
-          <Toolbar />
-        </React.Fragment>
-      </>}
+                </Stack>} */}
+              </Toolbar>
+            </AppBar>
+            <Toolbar />
+          </React.Fragment>
+        </>}
 
-      {questionnaire && <Paper elevation={10} sx={{ mt: 5, mb: 5, p: 5 }}>
-        <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
-          <Typography>
-            <div dangerouslySetInnerHTML={{ __html: questionnaire.description }}></div>
-          </Typography>
-        </Paper>
-        <Stack spacing={2} sx={{ mb: 2 }}>
-          {sections.map((section) => (<Box key={`section-${section.id}`}>
-            <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
-              <Typography>
-                <div dangerouslySetInnerHTML={{ __html: section.description }}></div>
-              </Typography>
-            </Paper>
-            <Stack spacing={2}>
-              {section.questions.map((question, i) => (
-                <SectionQuestion
-                  key={`section-${section.id}-question-${question.id}`}
-                  assessment={assessment}
-                  section={section}
-                  question={question}
-                  i={i}
-                  answers={answers} />
-              ))}
-            </Stack>
-          </Box>))}
-        </Stack>
-        <Button
-          color="primary"
-          fullWidth
-          onClick={handleSubmitAssessment}
-          startIcon={<SendSharp />}
-          variant="contained">Submit</Button>
-      </Paper>}
+        {questionnaire && <Paper elevation={10} sx={{ mt: 5, mb: 5, p: 5 }}>
+          <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
+            <Typography>
+              <div dangerouslySetInnerHTML={{ __html: questionnaire.description }}></div>
+            </Typography>
+          </Paper>
+          <Stack spacing={2} sx={{ mb: 2 }}>
+            {sections.map((section) => (<Box key={`section-${section.id}`}>
+              <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
+                <Typography>
+                  <div dangerouslySetInnerHTML={{ __html: section.description }}></div>
+                </Typography>
+              </Paper>
+              <Stack spacing={2}>
+                {section.questions.map((question, i) => (
+                  <SectionQuestion
+                    key={`section-${section.id}-question-${question.id}`}
+                    assessment={assessment}
+                    section={section}
+                    question={question}
+                    i={i}
+                    answers={answers} />
+                ))}
+              </Stack>
+            </Box>))}
+          </Stack>
+          <Button
+            color="primary"
+            fullWidth
+            onClick={handleSubmitAssessment}
+            startIcon={<SendSharp />}
+            variant="contained">Submit</Button>
+        </Paper>}
 
-      {showReminder && <StayFocusedDialog onContinue={() => {
-        setShowReminder(false);
-      }} />}
+        {showReminder && <StayFocusedDialog onContinue={() => {
+          setShowReminder(false);
+        }} />}
 
-      {isScreenSizeTooSmall && !showReminder && <ScreenSizeTooSmallDialog />}
-    </Container>
+        {isScreenSizeTooSmall && !showReminder && <ScreenSizeTooSmallDialog />}
+      </Container>
+    </ThemeProvider>
   );
 };
 
