@@ -37,7 +37,7 @@ class GeminiApiService
         $response = Http::withHeaders([
             'x-goog-api-key' => env('GEMINI_API_KEY'),
             'Content-Type' => 'application/json',
-        ])->timeout(60)->post(self::GEMINI_API_URL, [
+        ])->timeout(120)->post(self::GEMINI_API_URL, [
             'system_instruction' => [
                 'parts' => [
                     'text' => <<<'SYSTEM_INSTRUCTION'

@@ -368,6 +368,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                       </Stack>
                     </Box>))}
                     <Box sx={{ mb: 2 }}>
+                      <Typography>Usages: {question.usages_count}</Typography>
                       <Typography>Total Answers Count: {question.answers_count}</Typography>
                     </Box>
                     {question.type.code.toLowerCase() === 'arq' && <ButtonGroup>

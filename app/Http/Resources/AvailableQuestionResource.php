@@ -28,6 +28,7 @@ class AvailableQuestionResource extends JsonResource
                 strcasecmp($this->type->code, 'arq') === 0,
                 $this->is_true
             ),
+            'usages_count' => $this->sections->count(),
         ];
     }
 }
