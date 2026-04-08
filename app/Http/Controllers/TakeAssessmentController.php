@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\AssessmentResource;
 use App\Models\Assessment;
 use App\Models\AssessmentAnswer;
+use App\Services\AssessmentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -15,7 +17,8 @@ class TakeAssessmentController extends Controller
 {
     public function __construct(
         protected Assessment $assessment,
-        protected AssessmentAnswer $assessmentAnswer
+        protected AssessmentAnswer $assessmentAnswer,
+        protected AssessmentService $assessmentService,
     ) {}
 
     public function index(Request $request)
@@ -88,26 +91,34 @@ class TakeAssessmentController extends Controller
                 $assessment->save();
             }
 
-            $assessment = Cache::rememberForever("assessment-$assessment->id", function () use ($assessment) {
-                $assessment->loadMissing('questionnaire.sections.questions.options');
-                $assessment->loadMissing('questionnaire.sections.questions.type');
-                $assessment->questionnaire->sections->map(function ($section) {
-                    $section->setRelation('questions', $section->questions->shuffle());
-                    $section->questions->map(function ($question) {
-                        if ($question->type->code === 'MCQ' && $question->is_random_options) {
-                            $question->setRelation('options', $question->options->shuffle());
-                        }
-                    });
-                });
+            $assessment = Cache::remember(
+                "assessment-$assessment->id",
+                $assessment->duration_in_seconds,
+                function () use ($assessment) {
+                    $assessment->load([
+                        'questionnaire.sections.questions.options',
+                        'questionnaire.sections.questions.type',
+                    ]);
+                    $assessment->questionnaire->sections->map(function ($section) {
+                        $section->setRelation('questions', $section->questions->shuffle());
+                        $section->questions->map(function ($question) {
+                            if (strcasecmp($question->type->code, 'MCQ') === 0 && $question->is_random_options) {
+                                $question->setRelation('options', $question->options->shuffle());
+                            }
+                        });
+                    }
+                    );
 
-                return $assessment;
-            });
-            $assessment->loadMissing('answers');
+                    return $assessment;
+                }
+            );
+
+            $assessment->remaining_time_in_seconds = $assessmentRemainingTimeInSeconds;
         }
 
+        AssessmentResource::withoutWrapping();
+
         return Inertia::render('TakeAssessment/Index', [
-            'assessment' => $assessment,
-            'answers' => $assessment?->answers ?? [],
             'timer' => $withTimer ? [
                 'duration_in_seconds' => $assessmentDurationInSeconds,
                 'remaining_time_in_seconds' => $assessmentRemainingTimeInSeconds,
@@ -116,6 +127,9 @@ class TakeAssessmentController extends Controller
                 'current' => $attemptsOnBlur,
                 'max' => $maxAttemptsOnBlur,
             ] : null,
+            'assessment' => $assessment
+                ? AssessmentResource::make($assessment)
+                : null,
         ]);
     }
 
@@ -176,9 +190,17 @@ class TakeAssessmentController extends Controller
         Cache::forget("assessment-$assessment->id");
         $request->session()->forget('session_key');
 
+        [
+            'totalScore' => $totalScore,
+            'totalItems' => $totalItems,
+        ] = $this->assessmentService->calculateScore($assessment);
+        $score = "$totalScore / $totalItems";
+
         return redirect()->route('take-assessment')->with('submit', [
             'severity' => $timeExpired ? 'warning' : 'success',
-            'message' => $timeExpired ? 'Auto-submitted alloted time expired.' : 'Assessment submitted successfully.',
+            'message' => $timeExpired
+                ? "Auto-submitted alloted time expired. Score: $score"
+                : "Assessment submitted successfully. Score: $score",
         ]);
     }
 

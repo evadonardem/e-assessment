@@ -52,6 +52,7 @@ Route::middleware('auth')->group(function () {
             // Questionnaire > Section > Questions
             Route::group(['prefix' => '/{questionnaireSection}/questions'], function () {
                 Route::post('/', [QuestionQuestionnaireSectionController::class, 'store']);
+                Route::delete('/{question}', [QuestionQuestionnaireSectionController::class, 'destroy']);
             });
         });
 

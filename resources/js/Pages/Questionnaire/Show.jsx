@@ -3,6 +3,7 @@ import {
   AddCardSharp,
   DeleteTwoTone,
   FilterListSharp,
+  ListAltTwoTone,
   PlaylistAddSharp,
   Send
 } from '@mui/icons-material';
@@ -10,6 +11,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Badge,
   Box,
   Button,
   ButtonGroup,
@@ -53,6 +55,13 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
     });
   };
 
+  const handleRemoveQuestionFromSection = (questionId, fromSectionId) => (e) => {
+    e.preventDefault();
+    router.delete(`/questionnaires/${questionnaire.id}/sections/${fromSectionId}/questions/${questionId}`, {
+        preserveScroll: true,
+    });
+  };
+
   const handleAddFilterTag = (e) => {
     if (e.keyCode === 13) {
       const newFilteredTags = filteredTags;
@@ -78,6 +87,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
       page
     }, {
       preserveScroll: true,
+      preserveState: true,
     });
   };
 
@@ -213,11 +223,14 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
       <Stack direction="row" spacing={2}>
         {/* Questionnaire Sections */}
         <Box width={questionnaire.is_published ? '100%' : '50%'}>
-          {sections.map((section, i) => (<Accordion key={`section-${section.id}`} defaultExpanded>
+          {sections.map((section, i) => (<Accordion key={`section-${section.id}`} defaultExpanded={false}>
             <AccordionSummary>
               <Typography sx={{ flexGrow: 1 }}>
                 {`Section ${i + 1}`}
               </Typography>
+              <Badge badgeContent={section.questions.length} color='primary' sx={{ mt: 1 }}>
+                <ListAltTwoTone />
+              </Badge>
               {!questionnaire.is_published && <IconButton onClick={handleDeleteSection(section.id)}>
                 <DeleteTwoTone />
               </IconButton>}
@@ -234,6 +247,12 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
               <Stack spacing={1}>
                 {section.questions.map((question, i) => (
                   <Box key={`section-${section.id}-question-${question.id}`}>
+                    {!questionnaire.is_published && <Box textAlign="right">
+                        <IconButton
+                            onClick={handleRemoveQuestionFromSection(question.id, section.id)}>
+                            <DeleteTwoTone />
+                        </IconButton>
+                    </Box>}
                     <Stack direction="row" spacing={2}>
                       <Button
                         color="info"
@@ -248,7 +267,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                     </Stack>
                     <Stack sx={{ ml: 10 }}>
                       <Grid container spacing={2}>
-                        <Grid size={8}>
+                        <Grid size={12}>
                           {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => (
                             <Box key={`section-${section.id}-question-${question.id}-option-${option.id}`} sx={{ mb: 2 }}>
                               <Stack direction="row" spacing={2}>
@@ -275,9 +294,6 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                             </ButtonGroup>
                           </Stack>}
                         </Grid>
-                        <Grid size={4}>
-
-                        </Grid>
                       </Grid>
                     </Stack>
                     {!!questionnaire.is_published && !!stats && <Grid container spacing={2}>
@@ -297,6 +313,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                           sx={{ width: "100%" }} />
                       </Grid>
                     </Grid>}
+                    <Divider sx={{ my: 2 }} />
                   </Box>
                 ))}
               </Stack>

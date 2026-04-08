@@ -11,7 +11,7 @@ while true; do
     1 )
       docker-compose down && docker-compose pull && docker-compose up -d
       docker-compose exec workspace bash -c "composer update -o"
-      docker-compose exec workspace bash -c "source /usr/local/nvm/nvm.sh && ncu && ncu -u"
+      docker-compose exec workspace bash -c "source /usr/local/nvm/nvm.sh && ncu"
       docker-compose exec workspace bash -c "source /usr/local/nvm/nvm.sh && npm update"
       docker-compose exec workspace bash -c "source /usr/local/nvm/nvm.sh && npm audit fix"
       docker-compose exec workspace bash -c "source /usr/local/nvm/nvm.sh && npm run build"
@@ -19,7 +19,7 @@ while true; do
     2 )
       docker-compose down -v && docker-compose pull && docker-compose up -d
       docker-compose exec workspace bash -c "composer update -o"
-      docker-compose exec workspace bash -c "source /usr/local/nvm/nvm.sh && ncu && ncu -u"
+      docker-compose exec workspace bash -c "source /usr/local/nvm/nvm.sh && ncu"
       docker-compose exec workspace bash -c "source /usr/local/nvm/nvm.sh && npm update"
       docker-compose exec workspace bash -c "source /usr/local/nvm/nvm.sh && npm audit fix"
       docker-compose exec workspace bash -c "source /usr/local/nvm/nvm.sh && npm run build"

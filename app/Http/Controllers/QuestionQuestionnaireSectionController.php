@@ -27,8 +27,15 @@ class QuestionQuestionnaireSectionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
-    {
-        //
+    public function destroy(
+        Questionnaire $questionnaire,
+        QuestionnaireSection $questionnaireSection,
+        Question $question
+    ) {
+        if (! $questionnaire->sections->pluck('id')->contains($questionnaireSection->id)) {
+            abort(400);
+        }
+
+        $questionnaireSection->questions()->detach($question);
     }
 }

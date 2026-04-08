@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class QuestionOptionResource extends JsonResource
+class QuestionnaireSectionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,8 +16,10 @@ class QuestionOptionResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'order' => $this->order,
             'description' => $this->description,
-            // 'is_correct' => $this->is_correct,
+            'questions_count' => $this->when(isset($this->questions_count), $this->questions_count),
+            'questions' => QuestionnaireSectionQuestionResource::collection($this->whenLoaded('questions')),
         ];
     }
 }

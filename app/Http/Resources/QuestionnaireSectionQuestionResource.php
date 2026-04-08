@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class QuestionOptionResource extends JsonResource
+class QuestionnaireSectionQuestionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,7 +17,12 @@ class QuestionOptionResource extends JsonResource
         return [
             'id' => $this->id,
             'description' => $this->description,
-            // 'is_correct' => $this->is_correct,
+            'type' => QuestionTypeResource::make($this->type),
+            'is_published' => (bool) $this->is_published,
+            'options' => $this->when(
+                strcasecmp($this->type->code, 'mcq') === 0,
+                QuestionOptionResource::collection($this->options)
+            ),
         ];
     }
 }

@@ -12,7 +12,6 @@ export default defineConfig({
         },
     },
     plugins: [
-        react(),
         laravel({
             input: [
                 'resources/css/app.css',
@@ -20,5 +19,6 @@ export default defineConfig({
             ],
             refresh: true,
         }),
+        react(),
     ],
 });

@@ -14,274 +14,277 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault("Asia/Manila");
 
-const List = ({ questionnaires }) => {
-  const [createQuestionnaireModelOpen, setCreateQuestionnaireModelOpen] = React.useState(false);
-  const handleCreateQuestionnaire = () => {
-    setCreateQuestionnaireModelOpen(true);
-  };
-
-  const handleCreateQuestionnaireModalClose = () => {
-    setCreateQuestionnaireModelOpen(false);
-  };
-
-  const handleDeleteQuestionnaire = (question) => () => {
-    router.delete(`/questionnaires/${question.id}`);
-  };
-
-  const handleEditQuestionnaire = (question) => () => {
-    router.get(`/questionnaires/${question.id}`);
-  };
-
-  const columns = [
-    {
-      name: 'ID',
-      selector: row => row.id,
-    },
-    {
-      name: 'Title',
-      selector: row => row.title,
-    },
-    {
-      name: 'Published',
-      cell: row => (
-        <>
-          {!!row.is_published && <Icon>
-            <Check />
-          </Icon>}
-        </>
-      ),
-    },
-    {
-      name: '',
-      cell: row => (
-        <ButtonGroup
-          color="primary"
-          size="small"
-          variant="text">
-          <Button onClick={handleEditQuestionnaire(row)}>
-            {!row.is_published ? <Edit /> : <PreviewSharp />}
-          </Button>
-          <Button onClick={handleDeleteQuestionnaire(row)}>
-            <DeleteForever />
-          </Button>
-        </ButtonGroup>
-      ),
-    }
-  ];
-
-  const data = questionnaires.data;
-  const currentPage = questionnaires.current_page;
-  const lastPage = questionnaires.last_page;
-  const perPage = questionnaires.per_page ?? 10;
-
-  if (currentPage > lastPage) {
-    const queryParams = new URLSearchParams(window.location.search);
-    queryParams.set('page', lastPage);
-    history.pushState(null, null, `?${queryParams}`);
-    router.reload({ only: ['questionnaires'] });
-  }
-
-  const handlePageChange = page => {
-    const queryParams = new URLSearchParams(window.location.search);
-    queryParams.set('page', page);
-    history.pushState(null, null, `?${queryParams}`);
-    router.reload({ only: ['questionnaires'] });
-  };
-
-  const handleRowsPerPageChange = currentRowsPerPage => {
-    const queryParams = new URLSearchParams(window.location.search);
-    queryParams.set('per_page', currentRowsPerPage);
-    history.pushState(null, null, `?${queryParams}`);
-    router.reload({ only: ['questionnaires'] });
-  };
-
-  const handleCreateAssessment = (questionnaire) => (e) => {
-    e.preventDefault();
-    const data = new FormData(e.currentTarget);
-    const requestPayload = {
-      duration_in_seconds: data.get('duration_in_seconds'),
-      names: data.get('names').split('\n'),
-    };
-    router.post(
-      `/questionnaires/${questionnaire.id}/assessments`,
-      requestPayload,
-      { preserveScroll: true }
-    );
-  };
-
-  const openPDF = (questionnaire) => {
+const openPDF = (questionnaire) => {
     const options = {
-      filename: `${questionnaire.title}.pdf`,
-      method: 'open',
-      page: {
-        margin: Margin.MEDIUM,
-      }
+        filename: `${questionnaire.title}.pdf`,
+        method: 'open',
+        page: {
+            margin: Margin.MEDIUM,
+        }
     };
     generatePDF(() => document.getElementById(`questionnaire-${questionnaire.id}`), options);
-  };
+};
 
-  const QuestionDetails = ({ data: questionnaire }) => {
+const QuestionDetails = ({ data: questionnaire, onCreateAssessment }) => {
     return (<Paper sx={{ m: 2, p: 2 }} elevation={3}>
-      {!!questionnaire.is_published && <>
-        <Button onClick={() => openPDF(questionnaire)} sx={{ mb: 2 }} variant='contained'>Download PDF</Button>
-        <TableContainer component={Paper} id={`questionnaire-${questionnaire.id}`} sx={{ mb: 2 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Code</TableCell>
-                <TableCell>Started At</TableCell>
-                <TableCell>Submitted At</TableCell>
-                <TableCell>Time Spent</TableCell>
-                <TableCell>Score</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {questionnaire.assessments.map((assessment) => {
-                const startedAt = assessment.started_at
-                  ? dayjs.utc(assessment.started_at).tz().format("DD MMM YYYY hh:mm:ss A")
-                  : "-";
-                const submittedAt = assessment.submitted_at
-                  ? dayjs.utc(assessment.submitted_at).tz().format("DD MMM YYYY hh:mm:ss A")
-                  : "-";
-                const timeSpent = assessment.submitted_at && assessment.started_at
-                  ? dayjs.utc(assessment.submitted_at).diff(dayjs.utc(assessment.started_at), 'minutes', true).toFixed(2)
-                  : null;
+        {!!questionnaire.is_published && <>
+            <Button onClick={() => openPDF(questionnaire)} sx={{ mb: 2 }} variant='contained'>Download PDF</Button>
+            <TableContainer component={Paper} id={`questionnaire-${questionnaire.id}`} sx={{ mb: 2 }}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Code</TableCell>
+                            <TableCell>Started At</TableCell>
+                            <TableCell>Submitted At</TableCell>
+                            <TableCell>Time Spent</TableCell>
+                            <TableCell>Score</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {questionnaire.assessments.map((assessment) => {
+                            const startedAt = assessment.started_at
+                                ? dayjs.utc(assessment.started_at).tz().format("DD MMM YYYY hh:mm:ss A")
+                                : "-";
+                            const submittedAt = assessment.submitted_at
+                                ? dayjs.utc(assessment.submitted_at).tz().format("DD MMM YYYY hh:mm:ss A")
+                                : "-";
+                            const timeSpent = assessment.submitted_at && assessment.started_at
+                                ? dayjs.utc(assessment.submitted_at).diff(dayjs.utc(assessment.started_at), 'minutes', true).toFixed(2)
+                                : null;
 
-                return (<TableRow
-                  key={assessment.code}
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                >
-                  <TableCell component="th" scope="row">
-                    {assessment.name}
-                  </TableCell>
-                  <TableCell>{assessment.code}</TableCell>
-                  <TableCell>{startedAt}</TableCell>
-                  <TableCell>{submittedAt}</TableCell>
-                  <TableCell>{`${timeSpent ? `${timeSpent} minutes` : "-"}`}</TableCell>
-                  <TableCell>{assessment.submitted_at
-                    ? `${assessment.total_score}/${questionnaire.total_points}` : null}</TableCell>
-                </TableRow>);
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <Box
-          autoComplete="off"
-          component="form"
-          noValidate sx={{ mb: 2 }}
-          onSubmit={handleCreateAssessment(questionnaire)}>
-          <Stack spacing={2}>
-            <TextField
-              fullWidth
-              label="Duration in seconds"
-              type="number"
-              name="duration_in_seconds"
-              sx={{ width: "50%" }} />
-            <TextField
-              fullWidth
-              label="Enter names"
-              multiline
-              maxRows={50}
-              name="names"
-            />
-            <Button type="submit" variant="contained">Create Assessment</Button>
-          </Stack>
-        </Box>
-      </>}
-      {!questionnaire.is_published && <Typography>
-        Publish questionnaire to create assessments.
-      </Typography>}
+                            return (<TableRow
+                                key={assessment.code}
+                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                            >
+                                <TableCell component="th" scope="row">
+                                    {assessment.name}
+                                </TableCell>
+                                <TableCell>{assessment.code}</TableCell>
+                                <TableCell>{startedAt}</TableCell>
+                                <TableCell>{submittedAt}</TableCell>
+                                <TableCell>{`${timeSpent ? `${timeSpent} minutes` : "-"}`}</TableCell>
+                                <TableCell>{assessment.submitted_at
+                                    ? `${assessment.total_score}/${questionnaire.total_points}` : null}</TableCell>
+                            </TableRow>);
+                        })}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <Box
+                autoComplete="off"
+                component="form"
+                noValidate sx={{ mb: 2 }}
+                onSubmit={onCreateAssessment(questionnaire)}>
+                <Stack spacing={2}>
+                    <TextField
+                        fullWidth
+                        label="Duration in seconds"
+                        type="number"
+                        name="duration_in_seconds"
+                        sx={{ width: "50%" }} />
+                    <TextField
+                        fullWidth
+                        label="Enter names"
+                        multiline
+                        maxRows={50}
+                        name="names"
+                    />
+                    <Button type="submit" variant="contained">Create Assessment</Button>
+                </Stack>
+            </Box>
+        </>}
+        {!questionnaire.is_published && <Typography>
+            Publish questionnaire to create assessments.
+        </Typography>}
     </Paper>);
-  };
+};
 
-  QuestionDetails.propTypes = {
+QuestionDetails.propTypes = {
     data: PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      title: PropTypes.string.isRequired,
-      is_published: PropTypes.bool,
-      assessments: PropTypes.arrayOf(
-        PropTypes.shape({
-          code: PropTypes.string.isRequired,
-          name: PropTypes.string.isRequired,
-          started_at: PropTypes.string,
-          submitted_at: PropTypes.string,
-          total_score: PropTypes.number,
-        })
-      ),
-      total_points: PropTypes.number,
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        title: PropTypes.string.isRequired,
+        is_published: PropTypes.bool,
+        assessments: PropTypes.arrayOf(
+            PropTypes.shape({
+                code: PropTypes.string.isRequired,
+                name: PropTypes.string.isRequired,
+                started_at: PropTypes.string,
+                submitted_at: PropTypes.string,
+                total_score: PropTypes.number,
+            })
+        ),
+        total_points: PropTypes.number,
     }).isRequired,
-  };
+    onCreateAssessment: PropTypes.func.isRequired,
+};
 
-  return (
-    <>
-      <DataTable
-        columns={columns}
-        data={data}
-        expandableRowsComponent={QuestionDetails}
-        onChangePage={handlePageChange}
-        onChangeRowsPerPage={handleRowsPerPageChange}
-        paginationTotalRows={questionnaires.total}
-        paginationDefaultPage={currentPage}
-        paginationPerPage={perPage}
-        expandableRows
-        pagination
-        paginationServer />
+const List = ({ questionnaires }) => {
+    const [createQuestionnaireModelOpen, setCreateQuestionnaireModelOpen] = React.useState(false);
+    const handleCreateQuestionnaire = () => {
+        setCreateQuestionnaireModelOpen(true);
+    };
 
-      <ButtonGroup>
-        <Button onClick={handleCreateQuestionnaire}>
-          <AddTwoTone /> Create Questionnaire
-        </Button>
-      </ButtonGroup>
-      <Dialog
-        fullWidth
-        maxWidth='md'
-        open={createQuestionnaireModelOpen}
-        onClose={handleCreateQuestionnaireModalClose}
-        PaperProps={{
-          component: 'form',
-          onSubmit: (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const formJson = Object.fromEntries(formData.entries());
-            router.post(`/questionnaires`, formJson);
-            handleCreateQuestionnaireModalClose();
-          },
-        }}>
-        <DialogTitle>Create Questionnaire</DialogTitle>
-        <DialogContent>
-          <TextField
-            label='Title'
-            margin='dense'
-            name='title'
-            variant='standard'
-            autoFocus
-            fullWidth
-            required />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCreateQuestionnaireModalClose}>Cancel</Button>
-          <Button type="submit">Create</Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  );
+    const handleCreateQuestionnaireModalClose = () => {
+        setCreateQuestionnaireModelOpen(false);
+    };
+
+    const handleDeleteQuestionnaire = (question) => () => {
+        router.delete(`/questionnaires/${question.id}`);
+    };
+
+    const handleEditQuestionnaire = (question) => () => {
+        router.get(`/questionnaires/${question.id}`);
+    };
+
+    const columns = [
+        {
+            name: 'ID',
+            selector: row => row.id,
+        },
+        {
+            name: 'Title',
+            selector: row => row.title,
+        },
+        {
+            name: 'Published',
+            cell: row => (
+                <>
+                    {!!row.is_published && <Icon>
+                        <Check />
+                    </Icon>}
+                </>
+            ),
+        },
+        {
+            name: '',
+            cell: row => (
+                <ButtonGroup
+                    color="primary"
+                    size="small"
+                    variant="text">
+                    <Button onClick={handleEditQuestionnaire(row)}>
+                        {!row.is_published ? <Edit /> : <PreviewSharp />}
+                    </Button>
+                    <Button onClick={handleDeleteQuestionnaire(row)}>
+                        <DeleteForever />
+                    </Button>
+                </ButtonGroup>
+            ),
+        }
+    ];
+
+    const data = questionnaires.data;
+    const currentPage = questionnaires.current_page;
+    const lastPage = questionnaires.last_page;
+    const perPage = questionnaires.per_page ?? 10;
+
+    if (currentPage > lastPage) {
+        const queryParams = new URLSearchParams(window.location.search);
+        queryParams.set('page', lastPage);
+        history.pushState(null, null, `?${queryParams}`);
+        router.reload({ only: ['questionnaires'] });
+    }
+
+    const handlePageChange = page => {
+        const queryParams = new URLSearchParams(window.location.search);
+        queryParams.set('page', page);
+        history.pushState(null, null, `?${queryParams}`);
+        router.reload({ only: ['questionnaires'] });
+    };
+
+    const handleRowsPerPageChange = currentRowsPerPage => {
+        const queryParams = new URLSearchParams(window.location.search);
+        queryParams.set('per_page', currentRowsPerPage);
+        history.pushState(null, null, `?${queryParams}`);
+        router.reload({ only: ['questionnaires'] });
+    };
+
+    const handleCreateAssessment = (questionnaire) => (e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        const requestPayload = {
+            duration_in_seconds: data.get('duration_in_seconds'),
+            names: data.get('names').split('\n'),
+        };
+        router.post(
+            `/questionnaires/${questionnaire.id}/assessments`,
+            requestPayload,
+            { preserveScroll: true }
+        );
+    };
+
+    return (
+        <>
+            <DataTable
+                columns={columns}
+                data={data}
+                expandableRowsComponent={({ data: questionnaire }) => <QuestionDetails
+                    data={questionnaire}
+                    onCreateAssessment={handleCreateAssessment} />}
+                onChangePage={handlePageChange}
+                onChangeRowsPerPage={handleRowsPerPageChange}
+                paginationTotalRows={questionnaires.total}
+                paginationDefaultPage={currentPage}
+                paginationPerPage={perPage}
+                expandableRows
+                pagination
+                paginationServer />
+
+            <ButtonGroup>
+                <Button onClick={handleCreateQuestionnaire}>
+                    <AddTwoTone /> Create Questionnaire
+                </Button>
+            </ButtonGroup>
+            <Dialog
+                fullWidth
+                maxWidth='md'
+                open={createQuestionnaireModelOpen}
+                onClose={handleCreateQuestionnaireModalClose}
+                PaperProps={{
+                    component: 'form',
+                    onSubmit: (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        const formJson = Object.fromEntries(formData.entries());
+                        router.post(`/questionnaires`, formJson);
+                        handleCreateQuestionnaireModalClose();
+                    },
+                }}>
+                <DialogTitle>Create Questionnaire</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        label='Title'
+                        margin='dense'
+                        name='title'
+                        variant='standard'
+                        autoFocus
+                        fullWidth
+                        required />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCreateQuestionnaireModalClose}>Cancel</Button>
+                    <Button type="submit">Create</Button>
+                </DialogActions>
+            </Dialog>
+        </>
+    );
 };
 
 List.layout = page => (
-  <Layout title="Questionnaires">
-    {page}
-  </Layout>
+    <Layout title="Questionnaires">
+        {page}
+    </Layout>
 )
 
 List.propTypes = {
-  questionnaires: PropTypes.shape({
-    data: PropTypes.array.isRequired,
-    current_page: PropTypes.number.isRequired,
-    last_page: PropTypes.number.isRequired,
-    per_page: PropTypes.number,
-    total: PropTypes.number.isRequired,
-  }).isRequired,
+    questionnaires: PropTypes.shape({
+        data: PropTypes.array.isRequired,
+        current_page: PropTypes.number.isRequired,
+        last_page: PropTypes.number.isRequired,
+        per_page: PropTypes.number,
+        total: PropTypes.number.isRequired,
+    }).isRequired,
 };
 
 export default List;

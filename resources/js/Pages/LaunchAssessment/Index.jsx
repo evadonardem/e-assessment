@@ -1,3 +1,4 @@
+import { Head } from '@inertiajs/react';
 import { HighlightOffTwoTone, PsychologyTwoTone, RocketLaunch, SchoolTwoTone, TimerTwoTone, VisibilityTwoTone } from '@mui/icons-material';
 import {
   Alert,
@@ -11,6 +12,9 @@ import React, { } from 'react';
 
 const Index = () => {
   return <Container>
+    <Head>
+        <title>Launcher</title>
+    </Head>
     <Box
       display="flex"
       justifyContent="center"
@@ -49,6 +53,8 @@ const Index = () => {
           );
 
           if (newWindow) {
+            newWindow.moveTo(0, 0);
+            newWindow.resizeTo(width, height);
             newWindow.focus();
           }
         }}>
