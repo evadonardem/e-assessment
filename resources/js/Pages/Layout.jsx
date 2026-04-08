@@ -1,182 +1,185 @@
 import { Head, router } from '@inertiajs/react';
 import {
-  AccountCircleTwoTone,
-  Dashboard,
-  InventorySharp,
-  LogoutTwoTone,
-  Menu,
-  PasswordTwoTone,
-  TopicSharp
+    AccountCircleTwoTone,
+    Dashboard,
+    InventorySharp,
+    LogoutTwoTone,
+    Menu,
+    PasswordTwoTone,
+    TopicSharp
 } from '@mui/icons-material';
 import {
-  AppBar,
-  Box,
-  Container,
-  Divider,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  IconButton,
-  Paper,
-  Toolbar,
-  Typography,
+    AppBar,
+    Box,
+    Container,
+    Divider,
+    Drawer,
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    IconButton,
+    Toolbar,
+    Typography,
+    ThemeProvider,
 } from '@mui/material';
 import React from 'react';
 import PropTypes from 'prop-types';
+import theme from '../Settings/Theme';
 
 export default function Layout({ children, title }) {
-  const [openAppDrawer, setOpenAppDrawer] = React.useState(false);
-  const [openUserDrawer, setOpenUserDrawer] = React.useState(false);
+    const [openAppDrawer, setOpenAppDrawer] = React.useState(false);
+    const [openUserDrawer, setOpenUserDrawer] = React.useState(false);
 
-  const openAppModule = (route) => (e) => {
-    e.preventDefault();
-    router.get(`/${route}`);
-  };
+    const openAppModule = (route) => (e) => {
+        e.preventDefault();
+        router.get(`/${route}`);
+    };
 
-  const logout = () => {
-    router.post('/logout');
-  };
+    const logout = () => {
+        router.post('/logout');
+    };
 
-  // Drawers
-  const toggleAppDrawer = (newOpenAppDrawer) => () => {
-    setOpenAppDrawer(newOpenAppDrawer);
-  };
-  const toggleUserDrawer = (newOpenUserDrawer) => () => {
-    setOpenUserDrawer(newOpenUserDrawer);
-  };
+    // Drawers
+    const toggleAppDrawer = (newOpenAppDrawer) => () => {
+        setOpenAppDrawer(newOpenAppDrawer);
+    };
+    const toggleUserDrawer = (newOpenUserDrawer) => () => {
+        setOpenUserDrawer(newOpenUserDrawer);
+    };
 
-  const AppDrawerList = (
-    <Box
-      onClick={toggleAppDrawer(false)}
-      role="presentation"
-      sx={{ width: 250 }}>
-      <List>
-        {[
-          {
-            icon: <Dashboard />,
-            label: 'Dashboard',
-            route: 'dashboard',
-          },
-        ].map((item, i) => (
-          <ListItem key={`menu-${i}`} disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-      <Divider />
-      <List>
-        {[
-          {
-            icon: <TopicSharp />,
-            label: 'Questionnaires',
-            route: 'questionnaires',
-          },
-          {
-            icon: <InventorySharp />,
-            label: 'Questions',
-            route: 'questions',
-          }
-        ].map((item, i) => (
-          <ListItem key={`menu-${i}`} disablePadding>
-            <ListItemButton onClick={openAppModule(item.route)}>
-              <ListItemIcon>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton onClick={logout}>
-            <ListItemIcon>
-              <LogoutTwoTone />
-            </ListItemIcon>
-            <ListItemText primary="Logout" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-    </Box>
-  );
+    const AppDrawerList = (
+        <Box
+            onClick={toggleAppDrawer(false)}
+            role="presentation"
+            sx={{ width: 250 }}>
+            <List>
+                {[
+                    {
+                        icon: <Dashboard />,
+                        label: 'Dashboard',
+                        route: 'dashboard',
+                    },
+                ].map((item, i) => (
+                    <ListItem key={`menu-${i}`} disablePadding>
+                        <ListItemButton>
+                            <ListItemIcon>
+                                {item.icon}
+                            </ListItemIcon>
+                            <ListItemText primary={item.label} />
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+            </List>
+            <Divider />
+            <List>
+                {[
+                    {
+                        icon: <TopicSharp />,
+                        label: 'Questionnaires',
+                        route: 'questionnaires',
+                    },
+                    {
+                        icon: <InventorySharp />,
+                        label: 'Questions',
+                        route: 'questions',
+                    }
+                ].map((item, i) => (
+                    <ListItem key={`menu-${i}`} disablePadding>
+                        <ListItemButton onClick={openAppModule(item.route)}>
+                            <ListItemIcon>
+                                {item.icon}
+                            </ListItemIcon>
+                            <ListItemText primary={item.label} />
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+            </List>
+            <Divider />
+            <List>
+                <ListItem disablePadding>
+                    <ListItemButton onClick={logout}>
+                        <ListItemIcon>
+                            <LogoutTwoTone />
+                        </ListItemIcon>
+                        <ListItemText primary="Logout" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
+        </Box>
+    );
 
-  const UserDrawerList = (
-    <Box sx={{ width: 250 }} role="presentation" onClick={toggleUserDrawer(false)}>
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton>
-            <ListItemIcon>
-              <PasswordTwoTone />
-            </ListItemIcon>
-            <ListItemText primary="Change Password" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton onClick={logout}>
-            <ListItemIcon>
-              <LogoutTwoTone />
-            </ListItemIcon>
-            <ListItemText primary="Logout" />
-          </ListItemButton>
-        </ListItem>
-      </List>
-    </Box>
-  );
+    const UserDrawerList = (
+        <Box sx={{ width: 250 }} role="presentation" onClick={toggleUserDrawer(false)}>
+            <List>
+                <ListItem disablePadding>
+                    <ListItemButton>
+                        <ListItemIcon>
+                            <PasswordTwoTone />
+                        </ListItemIcon>
+                        <ListItemText primary="Change Password" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
+            <Divider />
+            <List>
+                <ListItem disablePadding>
+                    <ListItemButton onClick={logout}>
+                        <ListItemIcon>
+                            <LogoutTwoTone />
+                        </ListItemIcon>
+                        <ListItemText primary="Logout" />
+                    </ListItemButton>
+                </ListItem>
+            </List>
+        </Box>
+    );
 
-  return (
-    <React.Fragment>
-      <Head>
-        <title>{title}</title>
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-      </Head>
-      <Container sx={{ flexGrow: 1 }}>
+    return (
         <React.Fragment>
-          <AppBar position="fixed">
-            <Toolbar>
-              <IconButton
-                size="large"
-                edge="start"
-                color="inherit"
-                aria-label="menu"
-                sx={{ mr: 2 }}
-                onClick={toggleAppDrawer(true)}>
-                <Menu />
-              </IconButton>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                {title}
-              </Typography>
-              <IconButton color="inherit" onClick={toggleUserDrawer(true)}>
-                <AccountCircleTwoTone />
-              </IconButton>
-            </Toolbar>
-          </AppBar>
-          <Toolbar />
+            <ThemeProvider theme={theme}>
+                <Head>
+                    <title>{title}</title>
+                    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+                </Head>
+                <Container maxWidth={false} sx={{ flexGrow: 1 }}>
+                    <React.Fragment>
+                        <AppBar position="fixed">
+                            <Toolbar>
+                                <IconButton
+                                    size="large"
+                                    edge="start"
+                                    color="inherit"
+                                    aria-label="menu"
+                                    sx={{ mr: 2 }}
+                                    onClick={toggleAppDrawer(true)}>
+                                    <Menu />
+                                </IconButton>
+                                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                                    {title}
+                                </Typography>
+                                <IconButton color="inherit" onClick={toggleUserDrawer(true)}>
+                                    <AccountCircleTwoTone />
+                                </IconButton>
+                            </Toolbar>
+                        </AppBar>
+                        <Toolbar />
+                    </React.Fragment>
+                    <Box sx={{ p: 2 }}>{children}</Box>
+                </Container>
+                <Drawer anchor="left" open={openAppDrawer} onClose={toggleAppDrawer(false)}>
+                    {AppDrawerList}
+                </Drawer>
+                <Drawer anchor="right" open={openUserDrawer} onClose={toggleUserDrawer(false)}>
+                    {UserDrawerList}
+                </Drawer>
+            </ThemeProvider>
         </React.Fragment>
-        <Paper elevation={1} sx={{ p: 2 }}>{children}</Paper>
-      </Container>
-      <Drawer anchor="left" open={openAppDrawer} onClose={toggleAppDrawer(false)}>
-        {AppDrawerList}
-      </Drawer>
-      <Drawer anchor="right" open={openUserDrawer} onClose={toggleUserDrawer(false)}>
-        {UserDrawerList}
-      </Drawer>
-    </React.Fragment>
-  );
+    );
 };
 
 Layout.propTypes = {
-  children: PropTypes.node.isRequired,
-  title: PropTypes.string.isRequired,
+    children: PropTypes.node.isRequired,
+    title: PropTypes.string.isRequired,
 };

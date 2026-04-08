@@ -1,7 +1,7 @@
 import DataTable from 'react-data-table-component';
 import Layout from '../Layout'
 import { router } from '@inertiajs/react';
-import { Box, Button, ButtonGroup, Dialog, DialogActions, DialogContent, DialogTitle, Icon, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Box, Button, ButtonGroup, Dialog, DialogActions, DialogContent, DialogTitle, Fab, Icon, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { AddTwoTone, Check, DeleteForever, Edit, PreviewSharp } from '@mui/icons-material';
 import React from 'react';
 import generatePDF, { Margin } from 'react-to-pdf';
@@ -215,7 +215,7 @@ const List = ({ questionnaires }) => {
     };
 
     return (
-        <>
+        <Box sx={{ mb: 8 }}>
             <DataTable
                 columns={columns}
                 data={data}
@@ -231,11 +231,20 @@ const List = ({ questionnaires }) => {
                 pagination
                 paginationServer />
 
-            <ButtonGroup>
-                <Button onClick={handleCreateQuestionnaire}>
-                    <AddTwoTone /> Create Questionnaire
-                </Button>
-            </ButtonGroup>
+            <Fab
+                color="primary"
+                onClick={handleCreateQuestionnaire}
+                sx={{
+                    position: 'fixed',
+                    bottom: 16,
+                    right: 16,
+                }}
+                variant="extended"
+            >
+                <AddTwoTone sx={{ mr: 1 }} />
+                Create Questionnaire
+            </Fab>
+
             <Dialog
                 fullWidth
                 maxWidth='md'
@@ -267,7 +276,7 @@ const List = ({ questionnaires }) => {
                     <Button type="submit">Create</Button>
                 </DialogActions>
             </Dialog>
-        </>
+        </Box>
     );
 };
 

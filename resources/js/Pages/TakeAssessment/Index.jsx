@@ -23,7 +23,6 @@ import {
     Button,
     ButtonGroup,
     Container,
-    createTheme,
     Dialog,
     DialogActions,
     DialogContent,
@@ -42,7 +41,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
 import PropTypes from 'prop-types';
-import { red } from '@mui/material/colors';
+import theme from '../../Settings/Theme';
 
 const ALLOWED_BASE_SCREEN_SIZE_RATIO = {
     width: 0.98,
@@ -412,14 +411,6 @@ const Index = ({ attempts }) => {
         return () => window.removeEventListener("visibilitychange", handleVisibilityChangeAssessment);
     }, [assessment, handleVisibilityChangeAssessment])
 
-    const theme = createTheme({
-        palette: {
-            primary: {
-                main: red[900],
-            },
-        },
-    });
-
     if (dimScreen) {
         return <ThemeProvider theme={theme}>
             <Box
@@ -463,8 +454,6 @@ const Index = ({ attempts }) => {
         <ThemeProvider theme={theme}>
             <Container
                 maxWidth="lg"
-            // onMouseLeave={() => alert('mouse left')}
-            // onMouseEnter={() => alert('mouse entered')}
             >
                 {!assessment && <Box
                     display="flex"
@@ -577,12 +566,6 @@ const Index = ({ attempts }) => {
                             </Stack>
                         </Box>))}
                     </Stack>
-                    {/* <Button
-                        color="primary"
-                        fullWidth
-                        onClick={handleSubmitAssessment}
-                        startIcon={<SendSharp />}
-                        variant="contained">Submit</Button> */}
                     <Fab
                         color="primary"
                         onClick={handleSubmitAssessment}

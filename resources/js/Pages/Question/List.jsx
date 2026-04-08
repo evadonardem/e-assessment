@@ -1,9 +1,8 @@
 import DataTable from 'react-data-table-component';
 import Layout from '../Layout'
 import { router } from '@inertiajs/react';
-import { Box, Button, ButtonGroup, Chip, Icon, Paper, Table, TableBody, TableCell, TableContainer, TableRow, TextField } from '@mui/material';
-import { AddTwoTone, Check, CheckTwoTone, DeleteForever, Edit } from '@mui/icons-material';
-import React from 'react';
+import { Box, Button, ButtonGroup, Chip, Fab, Icon, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableRow, TextField } from '@mui/material';
+import { Abc, Check, CheckTwoTone, Create, DeleteForever, Edit } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
 const QuestionDetails = ({ data: question, onAddTag }) => {
@@ -129,6 +128,11 @@ const List = ({ questions }) => {
         router.get(`/questions/create`);
     };
 
+    const handleGenerateQuestions = (e) => {
+        e.preventDefault();
+        router.get(`/generator/mcq/create`);
+    };
+
     const handleAddTag = (questionId, currentTags) => (e) => {
         if (e.keyCode === 13) {
             currentTags.push(e.target.value);
@@ -164,12 +168,7 @@ const List = ({ questions }) => {
     };
 
     return (
-        <React.Fragment>
-            <ButtonGroup>
-                <Button onClick={handleAddQuestion}>
-                    <AddTwoTone /> Add Question
-                </Button>
-            </ButtonGroup>
+        <Box sx={{ mb: 8 }}>
             <DataTable
                 columns={columns}
                 data={data}
@@ -182,7 +181,14 @@ const List = ({ questions }) => {
                 expandableRows
                 pagination
                 paginationServer />
-        </React.Fragment>
+
+            <Box sx={{ position: 'fixed', bottom: 16, right: 16 }}>
+                <Stack direction="row" spacing={1}>
+                    <Fab color="primary" title="Generate MCQs" onClick={handleGenerateQuestions}><Abc /></Fab>
+                    <Fab color="secondary" title="Manual Entry" onClick={handleAddQuestion}><Create /></Fab>
+                </Stack>
+            </Box>
+        </Box>
     );
 };
 
