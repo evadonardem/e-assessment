@@ -48,8 +48,7 @@ const Show = ({ assessment, result }) => {
       <Box>
         <div dangerouslySetInnerHTML={{ __html: questionnaire.description }} />
       </Box>
-      {sections.map((section) => {
-        return <Box key={`section-${section.id}`}>
+      {sections.map((section) => <Box key={`section-${section.id}`}>
           <div dangerouslySetInnerHTML={{ __html: section.description }} />
           {section.questions.map((question, index) => {
 
@@ -102,8 +101,7 @@ const Show = ({ assessment, result }) => {
               
             </Box>;
           })}
-        </Box>
-      })}
+        </Box>)}
   </React.Fragment>;
 };
 Show.propTypes = {

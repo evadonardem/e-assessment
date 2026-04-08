@@ -149,9 +149,9 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
         >
             <Button
                 disableElevation
-                color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-                    ans.question_id == question.id &&
-                    ans.option_id == option.id) ? "primary" : "inherit"}
+                color={answers.find((ans) => +ans.questionnaire_section_id === +section.id &&
+                    +ans.question_id === +question.id &&
+                    +ans.option_id === +option.id) ? "primary" : "inherit"}
                 onClick={handleAnswer(option)}
                 size="small"
                 variant="contained">
@@ -160,7 +160,7 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
 
             {optionObscured ? <Skeleton animation={false} variant="rectangular" height={30} width="100%" />
                 : <Typography sx={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", KhtmlUserSelect: "none", MozUserSelect: "none", msUserSelect: "none", userSelect: "none" }}>
-                    <div dangerouslySetInnerHTML={{ __html: option.description }}></div>
+                    <div dangerouslySetInnerHTML={{ __html: option.description }} />
                 </Typography>}
         </Stack>;
     };
@@ -182,8 +182,8 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
         <Stack alignItems="flex-start" direction="row" spacing={1}>
             <Button
                 color="inherit"
-                startIcon={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-                    ans.question_id == question.id) ? <CheckBox color="primary" /> : <CheckBoxOutlineBlank />}
+                startIcon={answers.find((ans) => +ans.questionnaire_section_id === +section.id &&
+                    +ans.question_id === +question.id) ? <CheckBox color="primary" /> : <CheckBoxOutlineBlank />}
                 variant="text"
                 size="large"
                 sx={{ p: 0 }}
@@ -203,7 +203,7 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
             >
                 {obscured ? <Skeleton animation={false} variant="rectangular" height={40} width="100%" /> : <Box>
                     <Typography>
-                        <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
+                        <div dangerouslySetInnerHTML={{ __html: question.description }} />
                     </Typography>
                     <Divider sx={{ my: 2 }} />
                     <Stack>
@@ -217,8 +217,8 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
                             sx={{ width: "25%" }}
                             variant="contained">
                             <Button
-                                color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-                                    ans.question_id == question.id &&
+                                color={answers.find((ans) => +ans.questionnaire_section_id === +section.id &&
+                                    +ans.question_id === +question.id &&
                                     ans.is_true !== null &&
                                     !!ans.is_true) ? "primary" : "inherit"}
                                 onClick={handleAnswerAlternateResponseQuestion(section, question, true)}
@@ -226,8 +226,8 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
                                 True
                             </Button>
                             <Button
-                                color={answers.find((ans) => ans.questionnaire_section_id == section.id &&
-                                    ans.question_id == question.id &&
+                                color={answers.find((ans) => +ans.questionnaire_section_id === +section.id &&
+                                    +ans.question_id === +question.id &&
                                     ans.is_true !== null &&
                                     !ans.is_true) ? "primary" : "inherit"}
                                 onClick={handleAnswerAlternateResponseQuestion(section, question, false)}
@@ -543,14 +543,14 @@ const Index = ({ attempts }) => {
                 {questionnaire && <Paper elevation={10} sx={{ mt: 5, mb: 5, p: 5 }}>
                     <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
                         <Typography>
-                            <div dangerouslySetInnerHTML={{ __html: questionnaire.description }}></div>
+                            <div dangerouslySetInnerHTML={{ __html: questionnaire.description }} />
                         </Typography>
                     </Paper>
                     <Stack spacing={2} sx={{ mb: 2 }}>
                         {sections.map((section) => (<Box key={`section-${section.id}`}>
                             <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
                                 <Typography>
-                                    <div dangerouslySetInnerHTML={{ __html: section.description }}></div>
+                                    <div dangerouslySetInnerHTML={{ __html: section.description }} />
                                 </Typography>
                             </Paper>
                             <Stack spacing={2}>

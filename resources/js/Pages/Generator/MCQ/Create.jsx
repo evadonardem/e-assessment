@@ -42,8 +42,7 @@ const Create = () => {
             </Breadcrumbs>
 
             {!questions && (
-                <>
-                    <form onSubmit={handleGenerateQuestions}>
+                <form onSubmit={handleGenerateQuestions}>
                         <TextField
                             multiline
                             rows={11}
@@ -92,7 +91,6 @@ const Create = () => {
                             >Generate</Button>
                         </ButtonGroup>
                     </form>
-                </>
             )}
 
             {questions && (
@@ -102,11 +100,11 @@ const Create = () => {
                         {questions.map((question, index) => (
                             <div key={`questtion-${index}`} style={{ marginBottom: '16px' }}>
                                 <strong>Q{index + 1}:</strong>
-                                <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
+                                <div dangerouslySetInnerHTML={{ __html: question.description }} />
                                 <ol type='A'>
                                     {question.options.map((option, optIndex) => (
                                         <li key={optIndex}>
-                                            <div dangerouslySetInnerHTML={{ __html: option }}></div>
+                                            <div dangerouslySetInnerHTML={{ __html: option }} />
                                         </li>
                                     ))}
                                 </ol>

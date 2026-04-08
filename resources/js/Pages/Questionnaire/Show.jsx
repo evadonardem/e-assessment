@@ -203,7 +203,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
         {!questionnaire.is_published ? <Editor
           onBlur={handleChangeQuestionnaireDescription}
           value={questionnaire.description} /> : <Typography>
-          <div dangerouslySetInnerHTML={{ __html: questionnaire.description }}></div>
+          <div dangerouslySetInnerHTML={{ __html: questionnaire.description }} />
         </Typography>}
         {!questionnaire.is_published && <ButtonGroup fullWidth variant="contained">
           <Button
@@ -241,7 +241,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                   key={`section-description-${section.id}`}
                   onBlur={handleChangeSectionDescription(section.id)}
                   value={section.description} /> : <Typography>
-                  <div dangerouslySetInnerHTML={{ __html: section.description }}></div>
+                  <div dangerouslySetInnerHTML={{ __html: section.description }} />
                 </Typography>}
               </Paper>
               <Stack spacing={1}>
@@ -262,7 +262,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                         {`${i + 1}`}
                       </Button>
                       <Typography>
-                        <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
+                        <div dangerouslySetInnerHTML={{ __html: question.description }} />
                       </Typography>
                     </Stack>
                     <Stack sx={{ ml: 10 }}>
@@ -278,7 +278,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                                   {`${String.fromCharCode(65 + j)}`}
                                 </Button>
                                 <Typography>
-                                  <div dangerouslySetInnerHTML={{ __html: option.description }}></div>
+                                  <div dangerouslySetInnerHTML={{ __html: option.description }} />
                                 </Typography>
                               </Stack>
                             </Box>
@@ -372,7 +372,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                 {!!questions.data.length && questions.data.map((question) => (<Paper key={`available-question-${question.id}`} sx={{ mb: 2, p: 2 }}>
                   <Stack spacing={1}>
                     <Typography>
-                      <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
+                      <div dangerouslySetInnerHTML={{ __html: question.description }} />
                     </Typography>
                     {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, i) => (<Box key={`available-question-${question.id}-option-${option.id}`} sx={{ mb: 2 }}>
                       <Stack direction="row" spacing={2}>
@@ -380,7 +380,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                           {String.fromCharCode(65 + i)}
                         </Button>
                         <Typography>
-                          <div dangerouslySetInnerHTML={{ __html: option.description }}></div>
+                          <div dangerouslySetInnerHTML={{ __html: option.description }} />
                         </Typography>
                       </Stack>
                     </Box>))}

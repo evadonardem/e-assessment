@@ -163,7 +163,7 @@ const Create = ({ question_types: questionTypes }) => {
     };
 
     const initOptions = useCallback(() => {
-        let questionOptions = [];
+        const questionOptions = [];
         for (let i = 0; i < 4; i++) {
             questionOptions.push({
                 description: '',
@@ -195,7 +195,7 @@ const Create = ({ question_types: questionTypes }) => {
                 <Box sx={{ mb: 2 }}>
                     <Editor onChange={handleChangeEditor('question-stem')} value="" />
                 </Box>
-                <Accordion defaultExpanded={true} expanded={true}>
+                <Accordion defaultExpanded expanded>
                     <AccordionSummary>
                         <Stack alignItems='center' direction='row' gap={1}>
                             <Settings />
@@ -218,7 +218,7 @@ const Create = ({ question_types: questionTypes }) => {
                         </FormControl>
                         {selectedQuestionType.code.toLowerCase() === 'mcq' && <FormControlLabel
                             control={<Checkbox
-                                id={`question-randomized-options`}
+                                id="question-randomized-options"
                                 checked={question.isRandomOptions}
                                 onClick={handleClickCheckbox} />}
                             label='Random Options'

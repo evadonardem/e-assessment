@@ -25,80 +25,78 @@ const openPDF = (questionnaire) => {
     generatePDF(() => document.getElementById(`questionnaire-${questionnaire.id}`), options);
 };
 
-const QuestionDetails = ({ data: questionnaire, onCreateAssessment }) => {
-    return (<Paper sx={{ m: 2, p: 2 }} elevation={3}>
-        {!!questionnaire.is_published && <>
-            <Button onClick={() => openPDF(questionnaire)} sx={{ mb: 2 }} variant='contained'>Download PDF</Button>
-            <TableContainer component={Paper} id={`questionnaire-${questionnaire.id}`} sx={{ mb: 2 }}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Code</TableCell>
-                            <TableCell>Started At</TableCell>
-                            <TableCell>Submitted At</TableCell>
-                            <TableCell>Time Spent</TableCell>
-                            <TableCell>Score</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {questionnaire.assessments.map((assessment) => {
-                            const startedAt = assessment.started_at
-                                ? dayjs.utc(assessment.started_at).tz().format("DD MMM YYYY hh:mm:ss A")
-                                : "-";
-                            const submittedAt = assessment.submitted_at
-                                ? dayjs.utc(assessment.submitted_at).tz().format("DD MMM YYYY hh:mm:ss A")
-                                : "-";
-                            const timeSpent = assessment.submitted_at && assessment.started_at
-                                ? dayjs.utc(assessment.submitted_at).diff(dayjs.utc(assessment.started_at), 'minutes', true).toFixed(2)
-                                : null;
+const QuestionDetails = ({ data: questionnaire, onCreateAssessment }) => (<Paper sx={{ m: 2, p: 2 }} elevation={3}>
+    {!!questionnaire.is_published && <>
+        <Button onClick={() => openPDF(questionnaire)} sx={{ mb: 2 }} variant='contained'>Download PDF</Button>
+        <TableContainer component={Paper} id={`questionnaire-${questionnaire.id}`} sx={{ mb: 2 }}>
+            <Table>
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Code</TableCell>
+                        <TableCell>Started At</TableCell>
+                        <TableCell>Submitted At</TableCell>
+                        <TableCell>Time Spent</TableCell>
+                        <TableCell>Score</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {questionnaire.assessments.map((assessment) => {
+                        const startedAt = assessment.started_at
+                            ? dayjs.utc(assessment.started_at).tz().format("DD MMM YYYY hh:mm:ss A")
+                            : "-";
+                        const submittedAt = assessment.submitted_at
+                            ? dayjs.utc(assessment.submitted_at).tz().format("DD MMM YYYY hh:mm:ss A")
+                            : "-";
+                        const timeSpent = assessment.submitted_at && assessment.started_at
+                            ? dayjs.utc(assessment.submitted_at).diff(dayjs.utc(assessment.started_at), 'minutes', true).toFixed(2)
+                            : null;
 
-                            return (<TableRow
-                                key={assessment.code}
-                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                            >
-                                <TableCell component="th" scope="row">
-                                    {assessment.name}
-                                </TableCell>
-                                <TableCell>{assessment.code}</TableCell>
-                                <TableCell>{startedAt}</TableCell>
-                                <TableCell>{submittedAt}</TableCell>
-                                <TableCell>{`${timeSpent ? `${timeSpent} minutes` : "-"}`}</TableCell>
-                                <TableCell>{assessment.submitted_at
-                                    ? `${assessment.total_score}/${questionnaire.total_points}` : null}</TableCell>
-                            </TableRow>);
-                        })}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            <Box
-                autoComplete="off"
-                component="form"
-                noValidate sx={{ mb: 2 }}
-                onSubmit={onCreateAssessment(questionnaire)}>
-                <Stack spacing={2}>
-                    <TextField
-                        fullWidth
-                        label="Duration in seconds"
-                        type="number"
-                        name="duration_in_seconds"
-                        sx={{ width: "50%" }} />
-                    <TextField
-                        fullWidth
-                        label="Enter names"
-                        multiline
-                        maxRows={50}
-                        name="names"
-                    />
-                    <Button type="submit" variant="contained">Create Assessment</Button>
-                </Stack>
-            </Box>
-        </>}
-        {!questionnaire.is_published && <Typography>
-            Publish questionnaire to create assessments.
-        </Typography>}
-    </Paper>);
-};
+                        return (<TableRow
+                            key={assessment.code}
+                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                        >
+                            <TableCell component="th" scope="row">
+                                {assessment.name}
+                            </TableCell>
+                            <TableCell>{assessment.code}</TableCell>
+                            <TableCell>{startedAt}</TableCell>
+                            <TableCell>{submittedAt}</TableCell>
+                            <TableCell>{`${timeSpent ? `${timeSpent} minutes` : "-"}`}</TableCell>
+                            <TableCell>{assessment.submitted_at
+                                ? `${assessment.total_score}/${questionnaire.total_points}` : null}</TableCell>
+                        </TableRow>);
+                    })}
+                </TableBody>
+            </Table>
+        </TableContainer>
+        <Box
+            autoComplete="off"
+            component="form"
+            noValidate sx={{ mb: 2 }}
+            onSubmit={onCreateAssessment(questionnaire)}>
+            <Stack spacing={2}>
+                <TextField
+                    fullWidth
+                    label="Duration in seconds"
+                    type="number"
+                    name="duration_in_seconds"
+                    sx={{ width: "50%" }} />
+                <TextField
+                    fullWidth
+                    label="Enter names"
+                    multiline
+                    maxRows={50}
+                    name="names"
+                />
+                <Button type="submit" variant="contained">Create Assessment</Button>
+            </Stack>
+        </Box>
+    </>}
+    {!questionnaire.is_published && <Typography>
+        Publish questionnaire to create assessments.
+    </Typography>}
+</Paper>);
 
 QuestionDetails.propTypes = {
     data: PropTypes.shape({
@@ -148,13 +146,9 @@ const List = ({ questionnaires }) => {
         },
         {
             name: 'Published',
-            cell: row => (
-                <>
-                    {!!row.is_published && <Icon>
-                        <Check />
-                    </Icon>}
-                </>
-            ),
+            cell: row => !!row.is_published && <Icon>
+                <Check />
+            </Icon>,
         },
         {
             name: '',

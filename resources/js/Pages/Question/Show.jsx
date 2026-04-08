@@ -1,11 +1,7 @@
 import React from 'react'
 import Layout from '../Layout'
 
-const Show = () => {
-  return <React.Fragment>
-      <h1>Question</h1>
-  </React.Fragment>;
-};
+const Show = () => <h1>Question</h1>;
 
 Show.layout = page => <Layout title="Show Question">{page}</Layout>
 

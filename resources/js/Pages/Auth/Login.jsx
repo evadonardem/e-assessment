@@ -21,7 +21,7 @@ function Copyright(props) {
                 Dangerous Dave
             </Link>{' '}
             {new Date().getFullYear()}
-            {'.'}
+            .
         </Typography>
     );
 }

@@ -137,8 +137,7 @@ export default function Layout({ children, title }) {
     );
 
     return (
-        <React.Fragment>
-            <ThemeProvider theme={theme}>
+        <ThemeProvider theme={theme}>
                 <Head>
                     <title>{title}</title>
                     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -175,9 +174,8 @@ export default function Layout({ children, title }) {
                     {UserDrawerList}
                 </Drawer>
             </ThemeProvider>
-        </React.Fragment>
     );
-};
+}
 
 Layout.propTypes = {
     children: PropTypes.node.isRequired,

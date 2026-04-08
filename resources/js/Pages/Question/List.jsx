@@ -5,14 +5,13 @@ import { Box, Button, ButtonGroup, Chip, Fab, Icon, Paper, Stack, Table, TableBo
 import { Abc, Check, CheckTwoTone, Create, DeleteForever, Edit } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-const QuestionDetails = ({ data: question, onAddTag }) => {
-    return (<Paper sx={{ m: 2, ml: 8, p: 2 }} elevation={1}>
+const QuestionDetails = ({ data: question, onAddTag }) => (<Paper sx={{ m: 2, ml: 8, p: 2 }} elevation={1}>
         <TextField
             fullWidth
             label="Add tag"
             variant="outlined"
             onKeyDown={onAddTag(question.id, question.tags ?? [])} />
-        <div dangerouslySetInnerHTML={{ __html: question.description }}></div>
+        <div dangerouslySetInnerHTML={{ __html: question.description }} />
         <TableContainer component={Paper}>
             <Table>
                 <TableBody>
@@ -24,14 +23,13 @@ const QuestionDetails = ({ data: question, onAddTag }) => {
                             {option.is_correct ? <CheckTwoTone color='success' /> : null}
                         </TableCell>
                         <TableCell>
-                            <div dangerouslySetInnerHTML={{ __html: option.description }}></div>
+                            <div dangerouslySetInnerHTML={{ __html: option.description }} />
                         </TableCell>
                     </TableRow>))}
                 </TableBody>
             </Table>
         </TableContainer>
     </Paper>);
-};
 
 QuestionDetails.propTypes = {
     data: PropTypes.object.isRequired,
@@ -48,7 +46,7 @@ const List = ({ questions }) => {
         {
             name: 'Description',
             width: "25%",
-            selector: row => <div dangerouslySetInnerHTML={{ __html: row.description_preview }}></div>,
+            selector: row => <div dangerouslySetInnerHTML={{ __html: row.description_preview }} />,
         },
         {
             name: 'Type',
