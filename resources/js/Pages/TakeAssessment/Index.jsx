@@ -363,9 +363,9 @@ const Index = ({ attempts }) => {
                 if (
                     event.altKey === true ||
                     event.ctrlKey === true ||
-                    // event.metaKey === true ||
-                    event.shiftKey === true
-                    // || (event.keyCode >= 112 && event.keyCode <= 123)
+                    event.metaKey === true ||
+                    event.shiftKey === true ||
+                    (event.keyCode >= 112 && event.keyCode <= 123)
                 ) {
                     event.preventDefault();
                     assessment && setDimScreen(true);
