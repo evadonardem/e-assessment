@@ -114,6 +114,7 @@ class TakeAssessmentController extends Controller
             );
 
             $assessment->remaining_time_in_seconds = $assessmentRemainingTimeInSeconds;
+            $assessment->load('answers');
         }
 
         AssessmentResource::withoutWrapping();

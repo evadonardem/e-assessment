@@ -19,7 +19,7 @@ class QuestionnaireResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'tags' => $this->tags,
-            'is_published' => $this->is_published,
+            'is_published' => (bool) $this->is_published,
             'sections' => QuestionnaireSectionResource::collection($this->whenLoaded('sections')),
         ];
     }

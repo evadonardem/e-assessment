@@ -21,7 +21,7 @@ class QuestionnaireSectionQuestionResource extends JsonResource
             'is_published' => (bool) $this->is_published,
             'options' => $this->when(
                 strcasecmp($this->type->code, 'mcq') === 0,
-                QuestionOptionResource::collection($this->options)
+                QuestionOptionResource::collection($this->whenLoaded('options'))
             ),
         ];
     }
