@@ -23,6 +23,7 @@ import {
     Button,
     ButtonGroup,
     Container,
+    CssBaseline,
     Dialog,
     DialogActions,
     DialogContent,
@@ -165,6 +166,7 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
         </Stack>;
     };
 
+    // eslint-disable-next-line react-hooks/immutability
     QuestionOption.propTypes = {
         option: PropTypes.object.isRequired,
         j: PropTypes.number.isRequired,
@@ -452,141 +454,144 @@ const Index = ({ attempts }) => {
 
     return (
         <ThemeProvider theme={theme}>
-            <Container
-                maxWidth="lg"
-            >
-                {!assessment && <Box
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    minHeight="90vh"
+            <CssBaseline />
+            <div className="assessment-container">
+                <Container
+                    maxWidth={false}
                 >
-                    <Head>
-                        <title>Start</title>
-                    </Head>
-                    <Box
-                        component="form"
-                        textAlign="center"
-                        onSubmit={handleTakeAssessment}
-                        noValidate sx={{ mt: 1 }}
+                    {!assessment && <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        minHeight="90vh"
                     >
-                        <Avatar sx={{ m: "auto", bgcolor: 'secondary.main' }}>
-                            <TopicSharp />
-                        </Avatar>
-                        <Typography component="h1" variant="h5">
-                            Take Assessment
-                        </Typography>
-                        <Divider sx={{ my: 2 }} />
-                        <TextField
-                            error={!!errors.code}
-                            helperText={errors?.code}
-                            margin="normal"
-                            required
-                            fullWidth
-                            label="Code"
-                            name="code"
-                            autoComplete={false}
-                            autoFocus
-                        />
-                        <Divider sx={{ my: 2 }} />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{ mt: 3, mb: 2 }}
+                        <Head>
+                            <title>Start</title>
+                        </Head>
+                        <Box
+                            component="form"
+                            textAlign="center"
+                            onSubmit={handleTakeAssessment}
+                            noValidate sx={{ mt: 1 }}
                         >
-                            Start
-                        </Button>
-                    </Box>
+                            <Avatar sx={{ m: "auto", bgcolor: 'secondary.main' }}>
+                                <TopicSharp />
+                            </Avatar>
+                            <Typography component="h1" variant="h5">
+                                Take Assessment
+                            </Typography>
+                            <Divider sx={{ my: 2 }} />
+                            <TextField
+                                error={!!errors.code}
+                                helperText={errors?.code}
+                                margin="normal"
+                                required
+                                fullWidth
+                                label="Code"
+                                name="code"
+                                autoComplete={false}
+                                autoFocus
+                            />
+                            <Divider sx={{ my: 2 }} />
+                            <Button
+                                type="submit"
+                                fullWidth
+                                variant="contained"
+                                sx={{ mt: 3, mb: 2 }}
+                            >
+                                Start
+                            </Button>
+                        </Box>
 
-                    {!!flashMessageSubmit && <Snackbar
-                        open={openFlashMessageSubmit}
-                        autoHideDuration={5000}
-                        anchorOrigin={{ horizontal: "center", vertical: "top" }}
-                        onClose={() => setOpenFlashMessageSubmit(false)}>
-                        <Alert
-                            severity={flashMessageSubmit.severity}>
-                            {flashMessageSubmit.message}
-                        </Alert>
-                    </Snackbar>}
+                        {!!flashMessageSubmit && <Snackbar
+                            open={openFlashMessageSubmit}
+                            autoHideDuration={5000}
+                            anchorOrigin={{ horizontal: "center", vertical: "top" }}
+                            onClose={() => setOpenFlashMessageSubmit(false)}>
+                            <Alert
+                                severity={flashMessageSubmit.severity}>
+                                {flashMessageSubmit.message}
+                            </Alert>
+                        </Snackbar>}
 
-                </Box>}
+                    </Box>}
 
-                {questionnaire && <>
-                    <Head>
-                        <title>{`${name} (${assessment.code})`}</title>
-                    </Head>
-                    <React.Fragment>
-                        <AppBar position="fixed">
-                            <Toolbar>
-                                <Stack sx={{ flexGrow: 1 }}>
-                                    <Stack direction="row" alignContent="center" alignItems="center">
-                                        <IconButton color="inherit">
-                                            <AccountCircleTwoTone />
-                                        </IconButton>
-                                        <Typography sx={{ flexGrow: 1 }} variant="h5">{name}</Typography>
+                    {questionnaire && <>
+                        <Head>
+                            <title>{`${name} (${assessment.code})`}</title>
+                        </Head>
+                        <React.Fragment>
+                            <AppBar position="fixed">
+                                <Toolbar>
+                                    <Stack sx={{ flexGrow: 1 }}>
+                                        <Stack direction="row" alignContent="center" alignItems="center">
+                                            <IconButton color="inherit">
+                                                <AccountCircleTwoTone />
+                                            </IconButton>
+                                            <Typography sx={{ flexGrow: 1 }} variant="h5">{name}</Typography>
+                                        </Stack>
+                                        <Stack direction="row" alignContent="center" alignItems="center">
+                                            <IconButton color="inherit">
+                                                <TopicSharp />
+                                            </IconButton>
+                                            <Typography sx={{ flexGrow: 1 }} variant="subtitle1">{questionnaireTitle}</Typography>
+                                        </Stack>
                                     </Stack>
-                                    <Stack direction="row" alignContent="center" alignItems="center">
-                                        <IconButton color="inherit">
-                                            <TopicSharp />
-                                        </IconButton>
-                                        <Typography sx={{ flexGrow: 1 }} variant="subtitle1">{questionnaireTitle}</Typography>
-                                    </Stack>
+                                    <AsssementTimer assessment={assessment} questionnaire={questionnaire} timer={timer} />
+                                </Toolbar>
+                            </AppBar>
+                            <Toolbar />
+                        </React.Fragment>
+                    </>}
+
+                    {questionnaire && <Paper elevation={10} sx={{ mt: 5, mb: 5, p: 5 }}>
+                        <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
+                            <Typography>
+                                <div dangerouslySetInnerHTML={{ __html: questionnaire.description }} />
+                            </Typography>
+                        </Paper>
+                        <Stack spacing={2} sx={{ mb: 2 }}>
+                            {sections.map((section) => (<Box key={`section-${section.id}`}>
+                                <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
+                                    <Typography>
+                                        <div dangerouslySetInnerHTML={{ __html: section.description }} />
+                                    </Typography>
+                                </Paper>
+                                <Stack spacing={2}>
+                                    {section.questions.map((question, i) => (
+                                        <SectionQuestion
+                                            key={`section-${section.id}-question-${question.id}`}
+                                            assessment={assessment}
+                                            section={section}
+                                            question={question}
+                                            i={i}
+                                            answers={answers} />
+                                    ))}
                                 </Stack>
-                                <AsssementTimer assessment={assessment} questionnaire={questionnaire} timer={timer} />
-                            </Toolbar>
-                        </AppBar>
-                        <Toolbar />
-                    </React.Fragment>
-                </>}
+                            </Box>))}
+                        </Stack>
+                        <Fab
+                            color="primary"
+                            onClick={handleSubmitAssessment}
+                            sx={{
+                                position: 'fixed',
+                                bottom: 16,
+                                right: 16,
+                            }}
+                            variant="extended"
+                        >
+                            <SendSharp sx={{ mr: 1 }} />
+                            Submit
+                        </Fab>
+                    </Paper>}
 
-                {questionnaire && <Paper elevation={10} sx={{ mt: 5, mb: 5, p: 5 }}>
-                    <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
-                        <Typography>
-                            <div dangerouslySetInnerHTML={{ __html: questionnaire.description }} />
-                        </Typography>
-                    </Paper>
-                    <Stack spacing={2} sx={{ mb: 2 }}>
-                        {sections.map((section) => (<Box key={`section-${section.id}`}>
-                            <Paper elevation={2} sx={{ mb: 2, p: 2 }}>
-                                <Typography>
-                                    <div dangerouslySetInnerHTML={{ __html: section.description }} />
-                                </Typography>
-                            </Paper>
-                            <Stack spacing={2}>
-                                {section.questions.map((question, i) => (
-                                    <SectionQuestion
-                                        key={`section-${section.id}-question-${question.id}`}
-                                        assessment={assessment}
-                                        section={section}
-                                        question={question}
-                                        i={i}
-                                        answers={answers} />
-                                ))}
-                            </Stack>
-                        </Box>))}
-                    </Stack>
-                    <Fab
-                        color="primary"
-                        onClick={handleSubmitAssessment}
-                        sx={{
-                            position: 'fixed',
-                            bottom: 16,
-                            right: 16,
-                        }}
-                        variant="extended"
-                    >
-                        <SendSharp sx={{ mr: 1 }} />
-                        Submit
-                    </Fab>
-                </Paper>}
+                    {showReminder && <StayFocusedDialog onContinue={() => {
+                        setShowReminder(false);
+                    }} />}
 
-                {showReminder && <StayFocusedDialog onContinue={() => {
-                    setShowReminder(false);
-                }} />}
-
-                {isScreenSizeTooSmall && !showReminder && <ScreenSizeTooSmallDialog />}
-            </Container>
+                    {isScreenSizeTooSmall && !showReminder && <ScreenSizeTooSmallDialog />}
+                </Container>
+            </div>
         </ThemeProvider>
     );
 };

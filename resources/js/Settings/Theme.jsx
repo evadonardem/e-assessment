@@ -65,6 +65,14 @@ const theme = createTheme({
         borderRadius: 8,
     },
     components: {
+        MuiCssBaseline: {
+            styleOverrides: `
+                /* Force default cursor on everything inside the quiz wrapper */
+                .assessment-container, .assessment-container * {
+                    cursor: default !important;
+                }
+            `,
+        },
         MuiButton: {
             styleOverrides: {
                 root: {

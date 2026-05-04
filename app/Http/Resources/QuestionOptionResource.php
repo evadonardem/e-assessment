@@ -17,7 +17,12 @@ class QuestionOptionResource extends JsonResource
         return [
             'id' => $this->id,
             'description' => $this->description,
-            // 'is_correct' => $this->is_correct,
+            $this->mergeWhen(
+                $request->is('questionnaires/*'),
+                [
+                    'is_correct' => $this->is_correct,
+                ]
+            ),
         ];
     }
 }
