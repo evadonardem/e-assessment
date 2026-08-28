@@ -35,5 +35,9 @@
         "react-dom": "^19.2.4",
         "react-timer-hook": "^4.0.5",
         "react-to-pdf": "^3.2.1"
+    },
+    "allowScripts": {
+        "core-js@3.50.0": true,
+        "esbuild@0.28.2": true
     }
 }
