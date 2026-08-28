@@ -4,11 +4,11 @@ import {
     AlarmTwoTone,
     Block,
     CenterFocusStrong,
-    CheckBox,
-    CheckBoxOutlineBlank,
     HighlightOffTwoTone,
     Monitor,
     PsychologyTwoTone,
+    RadioButtonChecked,
+    RadioButtonUnchecked,
     SchoolTwoTone,
     SendSharp,
     TimerTwoTone,
@@ -134,8 +134,8 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
         });
     };
 
-    const QuestionOption = ({ option, j }) => {
-        const [optionObscured, setOptionObscured] = useState(true);
+    const QuestionOption = ({ option, j, isAnswered = false }) => {
+        const [optionObscured, setOptionObscured] = useState(!isAnswered);
         const handleOptionObscured = useCallback((isObscured) => {
             setOptionObscured(isObscured);
         }, []);
@@ -145,8 +145,8 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
             direction="row"
             spacing={2}
             marginBottom={1}
-            onMouseEnter={() => handleOptionObscured(false)}
-            onMouseLeave={() => handleOptionObscured(true)}
+            onMouseEnter={() => !isAnswered ? handleOptionObscured(false) : null }
+            onMouseLeave={() => !isAnswered ? handleOptionObscured(true) : null }
         >
             <Button
                 disableElevation
@@ -170,7 +170,11 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
     QuestionOption.propTypes = {
         option: PropTypes.object.isRequired,
         j: PropTypes.number.isRequired,
+        isAnswered: PropTypes.bool
     };
+
+    const answer = answers.find((ans) => +ans.questionnaire_section_id === +section.id &&
+        +ans.question_id === +question.id);
 
     return <Paper
         key={`section-${section.id}-question-${question.id}`}
@@ -184,8 +188,7 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
         <Stack alignItems="flex-start" direction="row" spacing={1}>
             <Button
                 color="inherit"
-                startIcon={answers.find((ans) => +ans.questionnaire_section_id === +section.id &&
-                    +ans.question_id === +question.id) ? <CheckBox color="primary" /> : <CheckBoxOutlineBlank />}
+                startIcon={answer ? <RadioButtonChecked color="primary" /> : <RadioButtonUnchecked />}
                 variant="text"
                 size="large"
                 sx={{ p: 0 }}
@@ -209,11 +212,21 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
                     </Typography>
                     <Divider sx={{ my: 2 }} />
                     <Stack>
-                        {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => (
-                            <QuestionOption
+                        
+                        {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => {
+                            if (answer) {
+                                if (+answer.option_id === +option.id) {
+                                    return <QuestionOption
+                                        key={`section-${section.id}-question-${question.id}-option-${j}`}
+                                        option={option} j={j} isAnswered />;
+                                }
+                                return null;
+                            }
+                            return <QuestionOption
                                 key={`section-${section.id}-question-${question.id}-option-${j}`}
-                                option={option} j={j} />
-                        ))}
+                                option={option} j={j} />;
+                        }).filter(Boolean)}
+
                         {question.type.code.toLowerCase() === 'arq' && <ButtonGroup
                             fullWidth
                             sx={{ width: "25%" }}
@@ -489,7 +502,7 @@ const Index = ({ attempts }) => {
                                 fullWidth
                                 label="Code"
                                 name="code"
-                                autoComplete={false}
+                                autoComplete="off"
                                 autoFocus
                             />
                             <Divider sx={{ my: 2 }} />
@@ -509,7 +522,15 @@ const Index = ({ attempts }) => {
                             anchorOrigin={{ horizontal: "center", vertical: "top" }}
                             onClose={() => setOpenFlashMessageSubmit(false)}>
                             <Alert
-                                severity={flashMessageSubmit.severity}>
+                                severity={flashMessageSubmit.severity}
+                                sx={{
+                                    minWidth: '400px',
+                                    fontSize: '1.5rem',
+                                    padding: '16px 24px',
+                                    '& .MuiAlert-icon': {
+                                        fontSize: '2rem'
+                                    }
+                                }}>
                                 {flashMessageSubmit.message}
                             </Alert>
                         </Snackbar>}

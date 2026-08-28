@@ -207,6 +207,8 @@ class TakeAssessmentController extends Controller
 
     public function windowSwitch(Request $request)
     {
+        $monitorWindowSwitching = env('ASSESSMENT_MONITOR_WINDOW_SWITCHING_ENABLED', false);
+
         $code = $request->input('code');
         $sessionKey = $request->session()->get('session_key');
         $assessment = $this->assessment->newQuery()
@@ -217,6 +219,10 @@ class TakeAssessmentController extends Controller
 
         if (! $assessment) {
             return redirect()->route('take-assessment');
+        }
+
+        if (! $monitorWindowSwitching) {
+            return;
         }
 
         if (! is_null($assessment->max_attempts_on_blur)) {

@@ -29,7 +29,7 @@ class MCQGeneratorController extends Controller
     public function generate(Request $request)
     {
         $request->validate([
-            'topic' => 'required|string|max:255',
+            'topic' => 'required|string',
             'items_count' => 'required|integer|min:1|max:100',
             'complexity_levels' => 'required|array',
             'complexity_levels.*' => 'in:easy,medium,hard',
