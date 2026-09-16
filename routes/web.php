@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [LaunchAssessmentController::class, 'index']);
-Route::get('/take-assessment', [TakeAssessmentController::class, 'index'])->name('take-assessment');
+Route::get('/take-assessment', [TakeAssessmentController::class, 'index'])->middleware('seb')->name('take-assessment');
 Route::post('/answers', [TakeAssessmentController::class, 'store']);
 Route::post('/window-switch', [TakeAssessmentController::class, 'windowSwitch']);
 Route::post('/submit-assessment', [TakeAssessmentController::class, 'submitAssessment']);

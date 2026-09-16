@@ -168,7 +168,10 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
 
     // eslint-disable-next-line react-hooks/immutability
     QuestionOption.propTypes = {
-        option: PropTypes.object.isRequired,
+        option: PropTypes.shape({
+            id: PropTypes.number.isRequired,
+            description: PropTypes.string.isRequired,
+        }).isRequired,
         j: PropTypes.number.isRequired,
         isAnswered: PropTypes.bool
     };
@@ -214,17 +217,18 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
                     <Stack>
                         
                         {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => {
+                            const currentOption = option;
                             if (answer) {
-                                if (+answer.option_id === +option.id) {
+                                if (+answer.option_id === +currentOption.id) {
                                     return <QuestionOption
                                         key={`section-${section.id}-question-${question.id}-option-${j}`}
-                                        option={option} j={j} isAnswered />;
+                                        option={currentOption} j={j} isAnswered />;
                                 }
                                 return null;
                             }
                             return <QuestionOption
                                 key={`section-${section.id}-question-${question.id}-option-${j}`}
-                                option={option} j={j} />;
+                                option={currentOption} j={j} />;
                         }).filter(Boolean)}
 
                         {question.type.code.toLowerCase() === 'arq' && <ButtonGroup
@@ -260,7 +264,12 @@ const SectionQuestion = ({ assessment, section, question, i, answers }) => {
 SectionQuestion.propTypes = {
     assessment: PropTypes.object.isRequired,
     section: PropTypes.object.isRequired,
-    question: PropTypes.object.isRequired,
+    question: PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        description: PropTypes.string.isRequired,
+        type: PropTypes.object.isRequired,
+        options: PropTypes.array.isRequired,
+    }).isRequired,
     i: PropTypes.number.isRequired,
     answers: PropTypes.array.isRequired,
 };

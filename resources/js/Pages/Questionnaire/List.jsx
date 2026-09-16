@@ -1,9 +1,9 @@
 import DataTable from 'react-data-table-component';
 import Layout from '../Layout'
 import { router } from '@inertiajs/react';
-import { Box, Button, ButtonGroup, Dialog, DialogActions, DialogContent, DialogTitle, Fab, Icon, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
-import { AddTwoTone, Check, DeleteForever, Edit, PreviewSharp } from '@mui/icons-material';
-import React from 'react';
+import { Box, Button, ButtonGroup, Dialog, DialogActions, DialogContent, DialogTitle, Fab, Icon, IconButton, InputAdornment, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { AddTwoTone, Check, Clear, DeleteForever, Edit, PreviewSharp } from '@mui/icons-material';
+import React, { useState } from 'react';
 import generatePDF, { Margin } from 'react-to-pdf';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -25,78 +25,134 @@ const openPDF = (questionnaire) => {
     generatePDF(() => document.getElementById(`questionnaire-${questionnaire.id}`), options);
 };
 
-const QuestionDetails = ({ data: questionnaire, onCreateAssessment }) => (<Paper sx={{ m: 2, p: 2 }} elevation={3}>
-    {!!questionnaire.is_published && <>
-        <Button onClick={() => openPDF(questionnaire)} sx={{ mb: 2 }} variant='contained'>Download PDF</Button>
-        <TableContainer component={Paper} id={`questionnaire-${questionnaire.id}`} sx={{ mb: 2 }}>
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Code</TableCell>
-                        <TableCell>Started At</TableCell>
-                        <TableCell>Submitted At</TableCell>
-                        <TableCell>Time Spent</TableCell>
-                        <TableCell>Score</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {questionnaire.assessments.map((assessment) => {
-                        const startedAt = assessment.started_at
-                            ? dayjs.utc(assessment.started_at).tz().format("DD MMM YYYY hh:mm:ss A")
-                            : "-";
-                        const submittedAt = assessment.submitted_at
-                            ? dayjs.utc(assessment.submitted_at).tz().format("DD MMM YYYY hh:mm:ss A")
-                            : "-";
-                        const timeSpent = assessment.submitted_at && assessment.started_at
-                            ? dayjs.utc(assessment.submitted_at).diff(dayjs.utc(assessment.started_at), 'minutes', true).toFixed(2)
-                            : null;
+const QuestionDetails = ({ data: questionnaire, onCreateAssessment }) => {
+    const { assessments: baseAssessments } = questionnaire;
+    const [assessments, setAssessments] = useState(baseAssessments);
+    const [searchKey, setSearchKey] = useState('');
 
-                        return (<TableRow
-                            key={assessment.code}
-                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                        >
-                            <TableCell component="th" scope="row">
-                                {assessment.name}
-                            </TableCell>
-                            <TableCell>{assessment.code}</TableCell>
-                            <TableCell>{startedAt}</TableCell>
-                            <TableCell>{submittedAt}</TableCell>
-                            <TableCell>{`${timeSpent ? `${timeSpent} minutes` : "-"}`}</TableCell>
-                            <TableCell>{assessment.submitted_at
-                                ? `${assessment.total_score}/${questionnaire.total_points}` : null}</TableCell>
-                        </TableRow>);
-                    })}
-                </TableBody>
-            </Table>
-        </TableContainer>
-        <Box
-            autoComplete="off"
-            component="form"
-            noValidate sx={{ mb: 2 }}
-            onSubmit={onCreateAssessment(questionnaire)}>
-            <Stack spacing={2}>
+    const filteredAssessments = (e) => {
+        const filter = e.target.value;
+        setSearchKey(filter);
+        setAssessments(baseAssessments.filter((a) => a.name.toLowerCase().includes(filter.toLowerCase())));
+    };
+
+    const [hiddenFields, setHiddenFields] = useState([]);
+    const handleChangeHiddenFields = (e) => {
+        setHiddenFields(e.target.value ?? []);
+    };
+
+    return (<Paper sx={{ m: 2, p: 2 }} elevation={3}>
+        {!!questionnaire.is_published && <>
+            <Stack direction="row">
                 <TextField
-                    fullWidth
-                    label="Duration in seconds"
-                    type="number"
-                    name="duration_in_seconds"
-                    sx={{ width: "50%" }} />
-                <TextField
-                    fullWidth
-                    label="Enter names"
-                    multiline
-                    maxRows={50}
-                    name="names"
+                    autoComplete="off"
+                    slotProps={{
+                        input: {
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        aria-label="clear text"
+                                        onClick={() => {
+                                            setSearchKey('');
+                                            setAssessments(baseAssessments);
+                                        }}
+                                        edge="end"
+                                    >
+                                        <Clear />
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }
+                    }}
+                    onChange={filteredAssessments}
+                    placeholder="Search name"
+                    size="small"
+                    sx={{ mb: 2, mr: 2, width: "25%" }}
+                    value={searchKey}
                 />
-                <Button type="submit" variant="contained">Create Assessment</Button>
+                <Select
+                    multiple
+                    size="small"
+                    value={hiddenFields}
+                    onChange={handleChangeHiddenFields}
+                    sx={{ mb: 2, mr: 2, width: "25%" }}
+                >
+                    {["Code", "Started At", "Submitted At", "Time Spent", "Score"].map((name) => (
+                        <MenuItem key={name} value={name}>{name}</MenuItem>
+                    ))}
+                </Select>
+                <Button onClick={() => openPDF(questionnaire)} sx={{ mb: 2 }} variant='contained'>Download PDF</Button>
             </Stack>
-        </Box>
-    </>}
-    {!questionnaire.is_published && <Typography>
-        Publish questionnaire to create assessments.
-    </Typography>}
-</Paper>);
+            <TableContainer component={Paper} id={`questionnaire-${questionnaire.id}`} sx={{ mb: 2 }}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Name</TableCell>
+                            {!hiddenFields.map((e) => e.toLowerCase()).includes("code") && <TableCell>Code</TableCell>}
+                            {!hiddenFields.map((e) => e.toLowerCase()).includes("started at") && <TableCell>Started At</TableCell>}
+                            {!hiddenFields.map((e) => e.toLowerCase()).includes("submitted at") && <TableCell>Submitted At</TableCell>}
+                            {!hiddenFields.map((e) => e.toLowerCase()).includes("time spent") && <TableCell>Time Spent</TableCell>}
+                            {!hiddenFields.map((e) => e.toLowerCase()).includes("score") && <TableCell>Score</TableCell>}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {assessments.map((assessment) => {
+                            const startedAt = assessment.started_at
+                                ? dayjs.utc(assessment.started_at).tz().format("DD MMM YYYY hh:mm:ss A")
+                                : "-";
+                            const submittedAt = assessment.submitted_at
+                                ? dayjs.utc(assessment.submitted_at).tz().format("DD MMM YYYY hh:mm:ss A")
+                                : "-";
+                            const timeSpent = assessment.submitted_at && assessment.started_at
+                                ? dayjs.utc(assessment.submitted_at).diff(dayjs.utc(assessment.started_at), 'minutes', true).toFixed(2)
+                                : null;
+
+                            return (<TableRow
+                                key={assessment.code}
+                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                            >
+                                <TableCell component="th" scope="row">
+                                    {assessment.name}
+                                </TableCell>
+                                {!hiddenFields.map((e) => e.toLowerCase()).includes("code") && <TableCell>{assessment.code}</TableCell>}
+                                {!hiddenFields.map((e) => e.toLowerCase()).includes("started at") && <TableCell>{startedAt}</TableCell>}
+                                {!hiddenFields.map((e) => e.toLowerCase()).includes("submitted at") && <TableCell>{submittedAt}</TableCell>}
+                                {!hiddenFields.map((e) => e.toLowerCase()).includes("time spent") && <TableCell>{`${timeSpent ? `${timeSpent} minutes` : "-"}`}</TableCell>}
+                                {!hiddenFields.map((e) => e.toLowerCase()).includes("score") && <TableCell>{assessment.submitted_at
+                                    ? `${assessment.total_score}/${questionnaire.total_points}` : null}</TableCell>}
+                            </TableRow>);
+                        })}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <Box
+                autoComplete="off"
+                component="form"
+                noValidate sx={{ mb: 2 }}
+                onSubmit={onCreateAssessment(questionnaire)}>
+                <Stack spacing={2}>
+                    <TextField
+                        fullWidth
+                        label="Duration in seconds"
+                        type="number"
+                        name="duration_in_seconds"
+                        sx={{ width: "50%" }} />
+                    <TextField
+                        fullWidth
+                        label="Enter names"
+                        multiline
+                        maxRows={50}
+                        name="names"
+                    />
+                    <Button type="submit" variant="contained">Create Assessment</Button>
+                </Stack>
+            </Box>
+        </>}
+        {!questionnaire.is_published && <Typography>
+            Publish questionnaire to create assessments.
+        </Typography>}
+    </Paper>);
+}
 
 QuestionDetails.propTypes = {
     data: PropTypes.shape({

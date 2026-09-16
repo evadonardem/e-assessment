@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
             'generator' => [
                 'mcq_generated_questions' => request()->session()->get('mcq_generated_questions'),
             ],
+            'seb' => 'seb://'.$request->getHttpHost().'/sebclient.seb',
         ]);
     }
 }
