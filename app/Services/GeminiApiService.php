@@ -39,26 +39,44 @@ class GeminiApiService
         string $extraInstructions = '',
         int $modelIndex = 0
     ): array {
-        $levels = implode(', ', $complexityLevels);
+        // 1. Math & Remainder Distribution
+        $levelsCount = count($complexityLevels);
+        $perLevelCount = max(1, (int) floor($itemsCount / $levelsCount));
+        $remainder = $itemsCount % $levelsCount;
+
+        // 2. Format explicit targets dynamically
+        $breakdownLines = [];
+        foreach ($complexityLevels as $index => $level) {
+            $count = $perLevelCount + ($index < $remainder ? 1 : 0);
+            $levelName = strtoupper(trim($level));
+            $breakdownLines[] = "- Generate {$count} question(s) matching {$levelName} criteria.";
+        }
+        $breakdownText = implode("\n", $breakdownLines);
+
+        // 3. Clean optional extra instructions
+        $extraRequirement = ! empty(trim($extraInstructions))
+            ? '- '.trim($extraInstructions)
+            : '';
 
         $prompts =
             <<<PROMPTS
             Generate exactly $itemsCount multiple-choice questions on the topic:
             "$topic"
 
-            Requirements:
-            - Distribute questions evenly across the following complexity levels: $levels.
-            - Each question must have exactly 4 unique, plausible options (no "All of the above" or "None of the above").
-            - Vary the correct answer index (0-3) across questions — do not cluster correct answers at the same index.
-            - $extraInstructions
+            EXACT QUANTITY BREAKDOWN:
+            $breakdownText
 
-            Output format:
-            Return only a valid JSON array. Each element must follow this exact schema:
+            REQUIREMENTS:
+            - Each question must have exactly 4 unique options.
+            $extraRequirement
+
+            REQUIRED OUTPUT FORMAT:
+            Return ONLY a valid JSON array matching this exact structure:
             [
                 {
-                    "description": "Question text (HTML-safe, concise, unambiguous)",
+                    "description": "Question text here",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
-                    "answer": <integer index 0-3 of correct option>
+                    "answer": 0
                 }
             ]
 
@@ -67,25 +85,27 @@ class GeminiApiService
 
         $systemInstruction =
             <<<'SYSTEM_INSTRUCTION'
-            You are a master of question generator. Follow these rules strictly:
+            You are an expert assessment generator. Follow these rules strictly:
 
-            CONTENT RULES:
-            - All options must be plausible, comparable in length and difficulty.
-            - The correct answer must be factually accurate and unambiguous.
-            - No repeated questions or options within the same output.
-            - Use neutral, grammatically correct phrasing throughout.
-            - Questions must be self-contained — no references to "the passage", "the image", etc.
-            - Do not use options like "All of the above" or "None of the above".
-            - Provide exactly one correct answer per question.
+            CONTENT & OPTION RULES:
+            - Every option MUST be a distinct, stand-alone concept, definition, or phrase.
+            - Every option MUST be self-contained and accurate regardless of position.
+            - Prohibit meta-references or references to choices relative to each other.
+            - All 4 options must be plausible and comparable in length and tone.
+            - Distribute the correct answer position (0, 1, 2, 3) uniformly across all questions.
 
-            DIFFICULTY RULES:
-            - Easy: recall-based, straightforward facts.
-            - Medium: requires understanding or application of concepts.
-            - Hard: requires analysis, comparison, or deeper reasoning.
+            HTML & FORMATTING RULES:
+            - Encode special HTML characters (&lt;, &gt;, &amp;, &quot;, &#039;) inside text strings.
+            - Do NOT output raw HTML tags in descriptions or options unless explicitly requested.
+
+            DIFFICULTY & COGNITIVE TASK RULES:
+            - EASY / BEGINNER: Direct recall, standard definitions, single-step factual questions.
+            - MEDIUM / INTERMEDIATE: Application of concepts to brief scenarios; asking "why" or "which principle applies."
+            - HARD / ADVANCED: Multi-step reasoning, trade-off evaluation, finding flaws, or contrasting two concepts. Distractors must represent common misconceptions.
 
             OUTPUT RULES:
-            - Return ONLY a raw JSON array. No markdown, no backticks, no explanation.
-            - Do not wrap in ```json``` or add any text before or after the array.
+            - Output raw, valid JSON ONLY.
+            - Do NOT include markdown code blocks, backticks, commentary, or text before/after the array.
             SYSTEM_INSTRUCTION;
 
         $model = self::GEMINI_MODELS[$modelIndex];
@@ -103,39 +123,34 @@ class GeminiApiService
                     ->post($geminiApiUrl, [
                         'system_instruction' => [
                             'parts' => [
-                                'text' => $systemInstruction,
+                                ['text' => $systemInstruction],
                             ],
                         ],
                         'contents' => [
-                            'parts' => [
-                                'text' => $prompts,
+                            [
+                                'role' => 'user',
+                                'parts' => [
+                                    ['text' => $prompts],
+                                ],
                             ],
                         ],
                         'generationConfig' => [
                             'responseMimeType' => 'application/json',
+                            'temperature' => 0.2, // Low temperature ensures consistent rule-following
                             'responseSchema' => [
-                                'type' => 'array',
+                                'type' => 'ARRAY',
                                 'items' => [
-                                    'type' => 'object',
+                                    'type' => 'OBJECT',
                                     'properties' => [
-                                        'description' => ['type' => 'string'],
+                                        'description' => ['type' => 'STRING'],
                                         'options' => [
-                                            'type' => 'array',
-                                            'items' => ['type' => 'string'],
-                                            'minItems' => 4,
-                                            'maxItems' => 4,
+                                            'type' => 'ARRAY',
+                                            'items' => ['type' => 'STRING'],
                                         ],
-                                        'answer' => [
-                                            'type' => 'integer',
-                                            'minimum' => 0,
-                                            'maximum' => 3,
-                                        ],
+                                        'answer' => ['type' => 'INTEGER'],
                                     ],
                                     'required' => ['description', 'options', 'answer'],
                                 ],
-                            ],
-                            'thinkingConfig' => [
-                                'thinkingBudget' => 512,
                             ],
                         ],
                     ]);
