@@ -5,7 +5,6 @@ import {
     Block,
     CenterFocusStrong,
     HighlightOffTwoTone,
-    Monitor,
     PsychologyTwoTone,
     RadioButtonChecked,
     RadioButtonUnchecked,
@@ -43,33 +42,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
 import PropTypes from 'prop-types';
 import theme from '../../Settings/Theme';
-
-const ALLOWED_BASE_SCREEN_SIZE_RATIO = {
-    width: 0.98,
-    height: 0.80,
-};
-
-const ScreenSizeTooSmallDialog = () => <Dialog open fullScreen>
-    <DialogContent>
-        <Box textAlign="center">
-            <Monitor sx={{ fontSize: 175 }} />
-            <Typography variant="h5">Screen Size Adjustment Needed</Typography>
-        </Box>
-        <Divider sx={{ my: 2 }} />
-        <Alert severity="warning" sx={{ mb: 2 }}>
-            Your current browser window size is not optimal for this platform.
-            For the best experience, please resize or maximize your browser window.
-        </Alert>
-        <Alert severity="info">
-            As you adjust your screen, remember that academic integrity is fundamental
-            to your educational success. A properly sized display can help you engage fully
-            with the material and ensures that all work submitted is a true reflection of
-            your own understanding and efforts. Upholding these standards not only helps
-            you learn but also fosters a culture of trust and respect
-            in the academic community.
-        </Alert>
-    </DialogContent>
-</Dialog>;
 
 const StayFocusedDialog = ({ onContinue }) => <Dialog open fullScreen>
     <DialogContent>
@@ -309,14 +281,6 @@ AsssementTimer.propTypes = {
 }
 
 const Index = ({ attempts }) => {
-
-    const [isScreenSizeTooSmall, setIsScreenSizeTooSmall] = useState(
-        window.devicePixelRatio === 1 && (
-            window.innerWidth / screen.availWidth < ALLOWED_BASE_SCREEN_SIZE_RATIO.width ||
-            window.innerHeight / screen.availHeight < ALLOWED_BASE_SCREEN_SIZE_RATIO.height
-        ) || window.devicePixelRatio < 0.85 || window.devicePixelRatio > 1.25
-    );
-
     const { assessment, errors, flashMessage, timer } = usePage().props;
     const { submit: flashMessageSubmit } = flashMessage;
     const [openFlashMessageSubmit, setOpenFlashMessageSubmit] = React.useState(true);
@@ -354,9 +318,6 @@ const Index = ({ attempts }) => {
     };
 
     const handleVisibilityChangeAssessment = useCallback(() => {
-        if (isScreenSizeTooSmall) {
-            return;
-        }
         if (maxAssessmentBlurAttempts !== null && document.hidden) {
             router.post('/window-switch', {
                 code: assessment.code,
@@ -365,7 +326,7 @@ const Index = ({ attempts }) => {
             });
         }
         setShowReminder(true);
-    }, [assessment, isScreenSizeTooSmall, maxAssessmentBlurAttempts]);
+    }, [assessment, maxAssessmentBlurAttempts]);
 
     const [dimScreen, setDimScreen] = useState(false);
     useEffect(() => {
@@ -396,24 +357,11 @@ const Index = ({ attempts }) => {
                 }
             }, { passive: false });
         });
-
-        // check screen size
-        window.onresize = () => {
-            const isScreenSizeTooSmall =
-                window.devicePixelRatio === 1 && (
-                    window.innerWidth / screen.availWidth < ALLOWED_BASE_SCREEN_SIZE_RATIO.width ||
-                    window.innerHeight / screen.availHeight < ALLOWED_BASE_SCREEN_SIZE_RATIO.height
-                ) || window.devicePixelRatio < 0.80 || window.devicePixelRatio > 1.5;
-            setIsScreenSizeTooSmall(isScreenSizeTooSmall);
-            if (isScreenSizeTooSmall) {
-                setShowReminder(false);
-            }
-        };
     }, [assessment, dimScreen]);
 
     useEffect(() => {
         document.onmouseleave = () => {
-            if (assessment && !isScreenSizeTooSmall && !showReminder) {
+            if (assessment && !showReminder) {
                 if (maxAssessmentBlurAttempts !== null) {
                     router.post('/window-switch', {
                         code: assessment.code,
@@ -424,7 +372,7 @@ const Index = ({ attempts }) => {
                 setShowReminder(true);
             }
         };
-    }, [assessment, isScreenSizeTooSmall, maxAssessmentBlurAttempts, showReminder]);
+    }, [assessment, maxAssessmentBlurAttempts, showReminder]);
 
     React.useEffect(() => {
         if (assessment) {
@@ -618,8 +566,6 @@ const Index = ({ attempts }) => {
                     {showReminder && <StayFocusedDialog onContinue={() => {
                         setShowReminder(false);
                     }} />}
-
-                    {isScreenSizeTooSmall && !showReminder && <ScreenSizeTooSmallDialog />}
                 </Container>
             </div>
         </ThemeProvider>
