@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\Generator\MCQGeneratorController;
 use App\Http\Controllers\Importer\AlternateResponseQuestionImporter;
 use App\Http\Controllers\Importer\MultipleChoiceQuestionImporter;
@@ -94,5 +95,10 @@ Route::middleware('auth')->group(function () {
             '/arq-data-feed',
             [AlternateResponseQuestionImporter::class, 'dataFeed']
         );
+    });
+
+    // Profile
+    Route::group(['prefix' => 'profile'], function () {
+        Route::post('/change-password', [ChangePasswordController::class, 'update']);
     });
 });

@@ -24,13 +24,15 @@ import {
     Typography,
     ThemeProvider,
 } from '@mui/material';
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import theme from '../Settings/Theme';
+import ChangePasswordDialog from '../Components/ChangePasswordDialog';
 
 export default function Layout({ children, title }) {
     const [openAppDrawer, setOpenAppDrawer] = React.useState(false);
     const [openUserDrawer, setOpenUserDrawer] = React.useState(false);
+    const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
 
     const openAppModule = (route) => (e) => {
         e.preventDefault();
@@ -47,6 +49,10 @@ export default function Layout({ children, title }) {
     };
     const toggleUserDrawer = (newOpenUserDrawer) => () => {
         setOpenUserDrawer(newOpenUserDrawer);
+    };
+
+    const handleShowChangePasswordModal = () => {
+        setShowChangePasswordModal(prev => !prev);
     };
 
     const AppDrawerList = (
@@ -114,7 +120,7 @@ export default function Layout({ children, title }) {
         <Box sx={{ width: 250 }} role="presentation" onClick={toggleUserDrawer(false)}>
             <List>
                 <ListItem disablePadding>
-                    <ListItemButton>
+                    <ListItemButton onClick={handleShowChangePasswordModal}>
                         <ListItemIcon>
                             <PasswordTwoTone />
                         </ListItemIcon>
@@ -173,6 +179,7 @@ export default function Layout({ children, title }) {
                 <Drawer anchor="right" open={openUserDrawer} onClose={toggleUserDrawer(false)}>
                     {UserDrawerList}
                 </Drawer>
+                { showChangePasswordModal && <ChangePasswordDialog onClose={handleShowChangePasswordModal} /> }
             </ThemeProvider>
     );
 }
