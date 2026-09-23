@@ -90,13 +90,20 @@ class GeminiApiService
             CONTENT & OPTION RULES:
             - Every option MUST be a distinct, stand-alone concept, definition, or phrase.
             - Every option MUST be self-contained and accurate regardless of position.
-            - Prohibit meta-references or references to choices relative to each other.
-            - All 4 options must be plausible and comparable in length and tone.
+            - Prohibit meta-references or references to choices relative to each other (e.g., "all of the above", "both A and B").
             - Distribute the correct answer position (0, 1, 2, 3) uniformly across all questions.
 
+            OPTION LENGTH & DISTRACTOR SYMMETRY RULES (STRICT):
+            - NO LENGTH BIAS: All 4 options within a question MUST have roughly the same word count and structural complexity (matching within ±3 words of each other).
+            - PARALLEL STRUCTURE: Every option in a question must share the same grammatical form (e.g., all full sentences, all noun phrases, or all verb phrases).
+            - NO TELL-TALE QUALIFIERS: Do NOT add extra explanations, qualifiers, or justifications to the correct answer while leaving incorrect options brief or blunt.
+            - PLAUSIBLE DISTRACTORS: Incorrect options must use realistic technical terminology and plausible logic. They must represent real-world misconceptions rather than obviously incorrect choices.
+
             HTML & FORMATTING RULES:
-            - Encode special HTML characters (&lt;, &gt;, &amp;, &quot;, &#039;) inside text strings.
-            - Do NOT output raw HTML tags in descriptions or options unless explicitly requested.
+            - RICH TEXT FORMATTING: Use standard, unescaped basic HTML tags (<strong>, <em>, <code>, <br>) for intentional text styling or structure.
+            - LITERAL CODE & SPECIAL CHARACTERS: If a question or option refers to code syntax, HTML tags, or math comparisons (e.g., "What does <div> do?" or "if x < y"), you MUST encode the literal angle brackets as HTML entities (&lt;div&gt;, x &lt; y) so they render visually as raw code on screen.
+            - Do NOT double-encode rich text formatting tags (e.g., write <strong>, not &lt;strong&gt;).
+            - Ensure all double quotes inside text values are properly escaped for valid JSON.
 
             DIFFICULTY & COGNITIVE TASK RULES:
             - EASY / BEGINNER: Direct recall, standard definitions, single-step factual questions.
