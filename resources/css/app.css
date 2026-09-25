@@ -1,0 +1,11 @@
+/* By default, hide the custom header on the web screen layout */
+.print-only-header {
+  display: none;
+}
+
+/* Force it to display only when the browser triggers a print action */
+@media print {
+  .print-only-header {
+    display: block !important;
+  }
+}

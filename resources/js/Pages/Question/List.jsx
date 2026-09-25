@@ -1,39 +1,49 @@
 import DataTable from 'react-data-table-component';
 import Layout from '../Layout'
 import { router } from '@inertiajs/react';
-import { Box, Button, ButtonGroup, Chip, Fab, Icon, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableRow, TextField } from '@mui/material';
-import { Abc, Check, CheckTwoTone, Create, DeleteForever, Edit } from '@mui/icons-material';
+import { Badge, Box, Button, ButtonGroup, Chip, Divider, Fab, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableRow, TextField } from '@mui/material';
+import { Abc, Bookmark, Check, Create, DeleteForever, Edit } from '@mui/icons-material';
 import PropTypes from 'prop-types';
+import { Gauge } from '@mui/x-charts';
 
-const QuestionDetails = ({ data: question, onAddTag }) => (<Paper sx={{ m: 2, ml: 8, p: 2 }} elevation={1}>
+const QuestionDetails = ({ data: question, onAddTag, onDeleteTag }) => (<Paper sx={{ m: 2, ml: 8, p: 2 }} elevation={1}>
+    <Stack direction="row" useFlexGap flexWrap="wrap" spacing={1}>
+        {question.tags.map((tag, tagIndex) => <Chip
+            key={`tag-${tagIndex}`}
+            label={tag}
+            sx={{ mb: 1, mr: 1 }}
+            onDelete={onDeleteTag(question.id, question.tags, tag)}/>)}
         <TextField
-            fullWidth
+            size="small"
             label="Add tag"
             variant="outlined"
             onKeyDown={onAddTag(question.id, question.tags ?? [])} />
-        <div dangerouslySetInnerHTML={{ __html: question.description }} />
-        <TableContainer component={Paper}>
-            <Table>
-                <TableBody>
-                    {question.options.map((option, i) => (<TableRow key={`option-${option.id}`}>
-                        <TableCell>
+    </Stack>
+    <Divider sx={{ my: 2 }} />
+    <div dangerouslySetInnerHTML={{ __html: question.description }} />
+    <Divider sx={{ my: 2 }} />
+    <TableContainer component={Paper}>
+        <Table>
+            <TableBody>
+                {question.options.map((option, i) => (<TableRow key={`option-${option.id}`}>
+                    <TableCell width={1}>
+                        <Button color={option.is_correct ? "success" : "inherit"} size="small" variant="contained">
                             {String.fromCharCode(65 + i)}
-                        </TableCell>
-                        <TableCell>
-                            {option.is_correct ? <CheckTwoTone color='success' /> : null}
-                        </TableCell>
-                        <TableCell>
-                            <div dangerouslySetInnerHTML={{ __html: option.description }} />
-                        </TableCell>
-                    </TableRow>))}
-                </TableBody>
-            </Table>
-        </TableContainer>
-    </Paper>);
+                        </Button>
+                    </TableCell>
+                    <TableCell>
+                        <div dangerouslySetInnerHTML={{ __html: option.description }} />
+                    </TableCell>
+                </TableRow>))}
+            </TableBody>
+        </Table>
+    </TableContainer>
+</Paper>);
 
 QuestionDetails.propTypes = {
     data: PropTypes.object.isRequired,
     onAddTag: PropTypes.func.isRequired,
+    onDeleteTag: PropTypes.func.isRequired,
 };
 
 const List = ({ questions }) => {
@@ -50,47 +60,68 @@ const List = ({ questions }) => {
         },
         {
             name: 'Type',
+            center: true,
             selector: row => row.type.code,
         },
         {
             name: 'Correct Responses',
+            right: true,
             selector: row => row.correct_answers_count,
         },
         {
             name: 'Responses',
+            right: true,
             selector: row => row.answers_count,
+        },
+        {
+            name: 'Accuracy',
+            center: true,
+            cell: row => row.answers_count > 0 && <Gauge height={100} value={(row.correct_answers_count / row.answers_count * 100).toFixed(1)} />,
         },
         {
             name: 'Tags',
             width: "10%",
-            wrap: true,
+            center: true,
             cell: row => <Box sx={{ p: 2 }}>
-                {!!row.tags && row.tags.map((tag, tagIndex) => (<Chip key={`tag-${tagIndex}`} label={tag} onDelete={handleDeleteTag(row.id, row.tags, tag)} sx={{ mb: 1, mr: 1 }} />))}
+                <Badge
+                    badgeContent={row.tags.length ?? 0}
+                    color="secondary"
+                >
+                    <Bookmark/>
+                </Badge>
             </Box>,
         },
         {
+            name: 'Actively Used',
+            center: true,
+            cell: row => (row.sections_count > 0 ? <Check color="success" /> : null),
+        },
+        {
             name: 'Random Options',
-            cell: row => (row.is_random_options ? <Icon><Check /></Icon> : null),
+            center: true,
+            cell: row => (row.is_random_options ? <Check color="success" /> : null),
         },
         {
             name: 'Published',
-            cell: row => (row.is_published ? <Icon><Check /></Icon> : null),
+            center: true,
+            cell: row => (row.is_published ? <Check color="success" /> : null),
         },
         {
             name: '',
             button: true,
             cell: row => <ButtonGroup
-                color="primary"
                 size="small"
-                variant="text">
+                variant="contained">
                 <Button
+                    color="primary"
                     onClick={handleShowQuestion(row)}>
                     <Edit />
                 </Button>
-                <Button
+                {(row.sections_count === 0 && row.answers_count === 0) && <Button
+                    color="error"
                     onClick={handleDeleteQuestion(row)}>
                     <DeleteForever />
-                </Button>
+                </Button>}
             </ButtonGroup>,
         }
     ];
@@ -170,7 +201,7 @@ const List = ({ questions }) => {
             <DataTable
                 columns={columns}
                 data={data}
-                expandableRowsComponent={({ data: question }) => <QuestionDetails data={question} onAddTag={handleAddTag} />}
+                expandableRowsComponent={({ data: question }) => <QuestionDetails data={question} onAddTag={handleAddTag} onDeleteTag={handleDeleteTag} />}
                 onChangePage={handlePageChange}
                 onChangeRowsPerPage={handleRowsPerPageChange}
                 paginationTotalRows={questions.total}

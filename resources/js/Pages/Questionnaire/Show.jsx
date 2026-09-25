@@ -1,11 +1,16 @@
 import { router } from '@inertiajs/react';
 import {
   AddCardSharp,
+  Close,
   DeleteTwoTone,
   FilterListSharp,
   ListAltTwoTone,
+  MenuOpen,
   PlaylistAddSharp,
-  Send
+  Print,
+  Send,
+  Visibility,
+  VisibilityOff
 } from '@mui/icons-material';
 import {
   Accordion,
@@ -25,26 +30,50 @@ import {
   Pagination,
   Paper,
   Select,
+  SpeedDial,
+  SpeedDialAction,
+  SpeedDialIcon,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import Editor from 'jodit-react';
 import Layout from '../Layout';
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { BarChart, Gauge } from '@mui/x-charts';
-import generatePDF, { Margin } from 'react-to-pdf';
 import PropTypes from 'prop-types';
+import { useReactToPrint } from 'react-to-print';
+import slugify from 'slugify';
 
 const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
   const { section_id: sectionId, question_type_code: questionTypeCode, tags } = filters;
-  const { sections } = questionnaire;
+  const { sections, title: questionnaireTitle } = questionnaire;
 
   const [filteredSectionId, setFilteredSectionId] = React.useState(sectionId);
   const [filteredQuestionTypeCode, setFilteredQuestionTypeCode] = React.useState(questionTypeCode);
   const [filteredTags, setFilteredTags] = React.useState(tags ?? []);
 
   const { meta: questionsMeta } = questions;
+
+  const [showItemAnalysis, setShowItemAnalysis] = useState(true);
+  const [showAnswers, setShowAnswers] = useState(true);
+
+  const handleShowItemAnalysis = () => {
+    setShowItemAnalysis(toggle => {
+      const updatedToggle = !toggle;
+      if (updatedToggle) {
+        setShowAnswers(true);
+      }
+      return updatedToggle;
+    });
+  };
+  const handleShowAnswers = () => setShowAnswers(toggle => !toggle);
+
+  const contentRef = useRef();
+  const reactToPrint = useReactToPrint({
+    contentRef,
+    documentTitle: () => slugify(questionnaireTitle, { lower: true }),
+  });
 
   const handleAddQuestionToSection = (questionId, toSectionId) => (e) => {
     e.preventDefault();
@@ -58,7 +87,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
   const handleRemoveQuestionFromSection = (questionId, fromSectionId) => (e) => {
     e.preventDefault();
     router.delete(`/questionnaires/${questionnaire.id}/sections/${fromSectionId}/questions/${questionId}`, {
-        preserveScroll: true,
+      preserveScroll: true,
     });
   };
 
@@ -181,30 +210,50 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
     });
   };
 
-  const openPDF = (questionnaire) => {
-    const options = {
-      filename: `${questionnaire.title}.pdf`,
-      method: 'open',
-      page: {
-        margin: Margin.MEDIUM,
-      }
-    };
-    generatePDF(() => document.getElementById(`questionnaire-${questionnaire.id}`), options);
-  };
+  const actions = [
+    {
+      icon: !showItemAnalysis ? <Visibility /> : <VisibilityOff />,
+      name: `${!showItemAnalysis ? "Show" : "Hide"} Item Analyis`,
+      onClick: handleShowItemAnalysis
+    },
+    {
+      icon: !showAnswers ? <Visibility /> : <VisibilityOff />,
+      name: `${!showAnswers ? "Show" : "Hide"} Answers`,
+      hidden: showItemAnalysis,
+      onClick: handleShowAnswers
+    },
+    { icon: <Print />, name: 'Print', onClick: reactToPrint },
+  ];
 
   return (<React.Fragment>
-    {!!questionnaire.is_published && <Box>
-      <Button onClick={() => openPDF(questionnaire)} sx={{ mb: 2 }} variant='contained'>Download PDF</Button>
-      <Divider sx={{ mt: 1, mb: 2 }} />
-    </Box>}
-    <Box id={`questionnaire-${questionnaire.id}`}>
+
+    {!!questionnaire.is_published && <SpeedDial
+      ariaLabel="SpeedDial basic example"
+      sx={{ position: 'fixed', bottom: 16, right: 16 }}
+      icon={<SpeedDialIcon icon={<MenuOpen />} openIcon={<Close />} />}
+    >
+      {actions.filter(a => !a.hidden).map((action) => (
+        <SpeedDialAction
+          key={action.name}
+          icon={action.icon}
+          slotProps={{
+            tooltip: {
+              title: action.name,
+            },
+          }}
+          onClick={action.onClick}
+        />
+      ))}
+    </SpeedDial>}
+
+    <Box ref={contentRef} id={`questionnaire-${questionnaire.id}`}>
       <Stack spacing={2} sx={{ mb: 2 }}>
-        <Typography variant='h5'>{questionnaire.title}</Typography>
+        <Typography textAlign="center" variant='h5'>{questionnaireTitle}</Typography>
         {!questionnaire.is_published ? <Editor
           onBlur={handleChangeQuestionnaireDescription}
-          value={questionnaire.description} /> : <Typography>
+          value={questionnaire.description} /> : <Paper sx={{ mb: 2, p: 2 }} elevation={2}>
           <div dangerouslySetInnerHTML={{ __html: questionnaire.description }} />
-        </Typography>}
+        </Paper>}
         {!questionnaire.is_published && <ButtonGroup fullWidth variant="contained">
           <Button
             color="secondary"
@@ -223,9 +272,9 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
       <Stack direction="row" spacing={2}>
         {/* Questionnaire Sections */}
         <Box width={questionnaire.is_published ? '100%' : '50%'}>
-          {sections.map((section, i) => (<Accordion key={`section-${section.id}`} defaultExpanded={false}>
+          {sections.map((section, i) => (<Accordion key={`section-${section.id}`} defaultExpanded={!!questionnaire.is_published}>
             <AccordionSummary>
-              <Typography sx={{ flexGrow: 1 }}>
+              <Typography variant="caption" sx={{ flexGrow: 1 }}>
                 {`Section ${i + 1}`}
               </Typography>
               <Badge badgeContent={section.questions.length} color='primary' sx={{ mt: 1 }}>
@@ -248,10 +297,10 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                 {section.questions.map((question, i) => (
                   <Box key={`section-${section.id}-question-${question.id}`}>
                     {!questionnaire.is_published && <Box textAlign="right">
-                        <IconButton
-                            onClick={handleRemoveQuestionFromSection(question.id, section.id)}>
-                            <DeleteTwoTone />
-                        </IconButton>
+                      <IconButton
+                        onClick={handleRemoveQuestionFromSection(question.id, section.id)}>
+                        <DeleteTwoTone />
+                      </IconButton>
                     </Box>}
                     <Stack direction="row" spacing={2}>
                       <Button
@@ -261,42 +310,40 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                         variant="text">
                         {`${i + 1}`}
                       </Button>
-                      <Typography>
-                        <div dangerouslySetInnerHTML={{ __html: question.description }} />
-                      </Typography>
+                      <Box><div dangerouslySetInnerHTML={{ __html: question.description }} /></Box>
                     </Stack>
                     <Stack sx={{ ml: 10 }}>
                       <Grid container spacing={2}>
                         <Grid size={12}>
                           {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, j) => (
-                            <Box key={`section-${section.id}-question-${question.id}-option-${option.id}`} sx={{ mb: 2 }}>
+                            <Box key={`section-${section.id}-question-${question.id}-option-${option.id}`} sx={{ mb: 1 }}>
                               <Stack direction="row" spacing={2}>
                                 <Button
-                                  color={option.is_correct ? "success" : "inherit"}
+                                  color={showAnswers && option.is_correct ? "success" : "inherit"}
                                   size="small"
                                   variant="contained">
                                   {`${String.fromCharCode(65 + j)}`}
                                 </Button>
-                                <Typography>
+                                <Box>
                                   <div dangerouslySetInnerHTML={{ __html: option.description }} />
-                                </Typography>
+                                </Box>
                               </Stack>
                             </Box>
                           ))}
                           {question.type.code.toLowerCase() === 'arq' && <Stack direction="row" spacing={2}>
                             <ButtonGroup variant="contained">
                               <Button
-                                color={question.is_true ? "success" : "inherit"}
+                                color={showAnswers && question.is_true ? "success" : "inherit"}
                                 size="small">True</Button>
                               <Button
-                                color={!question.is_true ? "success" : "inherit"}
+                                color={showAnswers && !question.is_true ? "success" : "inherit"}
                                 size="small">False</Button>
                             </ButtonGroup>
                           </Stack>}
                         </Grid>
                       </Grid>
                     </Stack>
-                    {!!questionnaire.is_published && !!stats && <Grid container spacing={2}>
+                    {!!questionnaire.is_published && !!stats && showItemAnalysis && <Grid container spacing={2}>
                       <Grid size={6}>
                         <Gauge
                           value={stats[`section-${section.id}`][`question-${question.id}`].gauge}
@@ -313,7 +360,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                           sx={{ width: "100%" }} />
                       </Grid>
                     </Grid>}
-                    <Divider sx={{ my: 2 }} />
+                    <Divider sx={{ my: 1 }} />
                   </Box>
                 ))}
               </Stack>

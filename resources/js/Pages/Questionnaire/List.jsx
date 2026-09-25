@@ -1,34 +1,30 @@
 import DataTable from 'react-data-table-component';
 import Layout from '../Layout'
 import { router } from '@inertiajs/react';
-import { Box, Button, ButtonGroup, Dialog, DialogActions, DialogContent, DialogTitle, Fab, Icon, IconButton, InputAdornment, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Box, Button, ButtonGroup, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Fab, Icon, IconButton, InputAdornment, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { AddTwoTone, Check, Clear, DeleteForever, Edit, PreviewSharp } from '@mui/icons-material';
-import React, { useState } from 'react';
-import generatePDF, { Margin } from 'react-to-pdf';
+import React, { useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import PropTypes from 'prop-types';
+import { useReactToPrint } from 'react-to-print';
+import slugify from 'slugify';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault("Asia/Manila");
 
-const openPDF = (questionnaire) => {
-    const options = {
-        filename: `${questionnaire.title}.pdf`,
-        method: 'open',
-        page: {
-            margin: Margin.MEDIUM,
-        }
-    };
-    generatePDF(() => document.getElementById(`questionnaire-${questionnaire.id}`), options);
-};
-
 const QuestionDetails = ({ data: questionnaire, onCreateAssessment }) => {
-    const { assessments: baseAssessments } = questionnaire;
+    const { assessments: baseAssessments, title: questionnaireTitle } = questionnaire;
     const [assessments, setAssessments] = useState(baseAssessments);
     const [searchKey, setSearchKey] = useState('');
+
+    const contentRef = useRef();
+    const reactToPrint = useReactToPrint({
+        contentRef,
+        documentTitle: () => slugify(questionnaireTitle, { lower: true }),
+    });
 
     const filteredAssessments = (e) => {
         const filter = e.target.value;
@@ -81,50 +77,56 @@ const QuestionDetails = ({ data: questionnaire, onCreateAssessment }) => {
                         <MenuItem key={name} value={name}>{name}</MenuItem>
                     ))}
                 </Select>
-                <Button onClick={() => openPDF(questionnaire)} sx={{ mb: 2 }} variant='contained'>Download PDF</Button>
+                <Button onClick={reactToPrint} sx={{ mb: 2 }} variant="contained">Print</Button>
             </Stack>
-            <TableContainer component={Paper} id={`questionnaire-${questionnaire.id}`} sx={{ mb: 2 }}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Name</TableCell>
-                            {!hiddenFields.map((e) => e.toLowerCase()).includes("code") && <TableCell>Code</TableCell>}
-                            {!hiddenFields.map((e) => e.toLowerCase()).includes("started at") && <TableCell>Started At</TableCell>}
-                            {!hiddenFields.map((e) => e.toLowerCase()).includes("submitted at") && <TableCell>Submitted At</TableCell>}
-                            {!hiddenFields.map((e) => e.toLowerCase()).includes("time spent") && <TableCell>Time Spent</TableCell>}
-                            {!hiddenFields.map((e) => e.toLowerCase()).includes("score") && <TableCell>Score</TableCell>}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {assessments.map((assessment) => {
-                            const startedAt = assessment.started_at
-                                ? dayjs.utc(assessment.started_at).tz().format("DD MMM YYYY hh:mm:ss A")
-                                : "-";
-                            const submittedAt = assessment.submitted_at
-                                ? dayjs.utc(assessment.submitted_at).tz().format("DD MMM YYYY hh:mm:ss A")
-                                : "-";
-                            const timeSpent = assessment.submitted_at && assessment.started_at
-                                ? dayjs.utc(assessment.submitted_at).diff(dayjs.utc(assessment.started_at), 'minutes', true).toFixed(2)
-                                : null;
+            <div ref={contentRef}>
+                <div className="print-only-header">
+                    <Typography textAlign="center" variant="body1">{questionnaireTitle}</Typography>
+                    <Divider sx={{ border: 1, my: 1 }}/>
+                </div>
+                <TableContainer component={Paper} sx={{ mb: 2 }}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Name</TableCell>
+                                {!hiddenFields.map((e) => e.toLowerCase()).includes("code") && <TableCell>Code</TableCell>}
+                                {!hiddenFields.map((e) => e.toLowerCase()).includes("started at") && <TableCell>Started At</TableCell>}
+                                {!hiddenFields.map((e) => e.toLowerCase()).includes("submitted at") && <TableCell>Submitted At</TableCell>}
+                                {!hiddenFields.map((e) => e.toLowerCase()).includes("time spent") && <TableCell>Time Spent</TableCell>}
+                                {!hiddenFields.map((e) => e.toLowerCase()).includes("score") && <TableCell>Score</TableCell>}
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {assessments.map((assessment) => {
+                                const startedAt = assessment.started_at
+                                    ? dayjs.utc(assessment.started_at).tz().format("DD MMM YYYY hh:mm:ss A")
+                                    : "-";
+                                const submittedAt = assessment.submitted_at
+                                    ? dayjs.utc(assessment.submitted_at).tz().format("DD MMM YYYY hh:mm:ss A")
+                                    : "-";
+                                const timeSpent = assessment.submitted_at && assessment.started_at
+                                    ? dayjs.utc(assessment.submitted_at).diff(dayjs.utc(assessment.started_at), 'minutes', true).toFixed(2)
+                                    : null;
 
-                            return (<TableRow
-                                key={assessment.code}
-                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                            >
-                                <TableCell component="th" scope="row">
-                                    {assessment.name}
-                                </TableCell>
-                                {!hiddenFields.map((e) => e.toLowerCase()).includes("code") && <TableCell>{assessment.code}</TableCell>}
-                                {!hiddenFields.map((e) => e.toLowerCase()).includes("started at") && <TableCell>{startedAt}</TableCell>}
-                                {!hiddenFields.map((e) => e.toLowerCase()).includes("submitted at") && <TableCell>{submittedAt}</TableCell>}
-                                {!hiddenFields.map((e) => e.toLowerCase()).includes("time spent") && <TableCell>{`${timeSpent ? `${timeSpent} minutes` : "-"}`}</TableCell>}
-                                {!hiddenFields.map((e) => e.toLowerCase()).includes("score") && <TableCell>{assessment.submitted_at
-                                    ? `${assessment.total_score}/${questionnaire.total_points}` : null}</TableCell>}
-                            </TableRow>);
-                        })}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                                return (<TableRow
+                                    key={assessment.code}
+                                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                >
+                                    <TableCell component="th" scope="row">
+                                        {assessment.name}
+                                    </TableCell>
+                                    {!hiddenFields.map((e) => e.toLowerCase()).includes("code") && <TableCell>{assessment.code}</TableCell>}
+                                    {!hiddenFields.map((e) => e.toLowerCase()).includes("started at") && <TableCell>{startedAt}</TableCell>}
+                                    {!hiddenFields.map((e) => e.toLowerCase()).includes("submitted at") && <TableCell>{submittedAt}</TableCell>}
+                                    {!hiddenFields.map((e) => e.toLowerCase()).includes("time spent") && <TableCell>{`${timeSpent ? `${timeSpent} minutes` : "-"}`}</TableCell>}
+                                    {!hiddenFields.map((e) => e.toLowerCase()).includes("score") && <TableCell>{assessment.submitted_at
+                                        ? `${assessment.total_score}/${questionnaire.total_points}` : null}</TableCell>}
+                                </TableRow>);
+                            })}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </div>
             <Box
                 autoComplete="off"
                 component="form"

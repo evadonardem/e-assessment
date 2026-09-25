@@ -40,6 +40,7 @@ class QuestionController extends Controller
                             ->whereRaw("questions.is_true = $refTable.is_true");
                     });
                 },
+                'sections',
             ])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage))->map(function ($question) {
