@@ -8,6 +8,7 @@ use App\Http\Resources\AvailableQuestionResource;
 use App\Models\Question;
 use App\Models\Questionnaire;
 use App\Models\QuestionType;
+use App\Services\QuestionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\JoinClause;
@@ -17,6 +18,7 @@ use Inertia\Inertia;
 class QuestionnaireController extends Controller
 {
     public function __construct(
+        protected QuestionService $questionService,
         protected Question $question
     ) {}
 
@@ -166,7 +168,27 @@ class QuestionnaireController extends Controller
                 });
             }
 
-            $availableQuestionsQuery->withCount(['answers']);
+            $availableQuestionsQuery->withCount([
+                'answers',
+                'answers as correct_answers_count' => function (Builder $query) {
+                    $query->where(function (Builder $query) {
+                        $query->whereHas('question.type', function (Builder $query) {
+                            $query->where('code', 'mcq');
+                        });
+                        $query->whereHas('option', function (Builder $query) {
+                            $query->where('is_correct', 1);
+                        });
+                    })->orWhere(function (Builder $query) {
+                        $refTable = $query->getModel()->getTable();
+                        $query->whereHas('question.type', function (Builder $query) {
+                            $query->where('code', 'arq');
+                        });
+                        $query
+                            ->join('questions', "$refTable.question_id", 'questions.id')
+                            ->whereRaw("questions.is_true = $refTable.is_true");
+                    });
+                },
+            ]);
             $availableQuestionsQuery->orderBy('updated_at', 'desc');
 
             $availableQuestions = $availableQuestionsQuery->with(['type', 'options'])->paginate(15);
@@ -277,6 +299,7 @@ class QuestionnaireController extends Controller
             'questions' => AvailableQuestionResource::collection($availableQuestions),
             'questionTypes' => $questionTypes,
             'stats' => $stats,
+            'questionTags' => $this->questionService->getAllTags(),
         ]);
     }
 

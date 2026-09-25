@@ -3,7 +3,6 @@ import {
   AddCardSharp,
   Close,
   DeleteTwoTone,
-  FilterListSharp,
   ListAltTwoTone,
   MenuOpen,
   PlaylistAddSharp,
@@ -16,6 +15,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Autocomplete,
   Badge,
   Box,
   Button,
@@ -34,6 +34,12 @@ import {
   SpeedDialAction,
   SpeedDialIcon,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableFooter,
+  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
@@ -45,7 +51,7 @@ import PropTypes from 'prop-types';
 import { useReactToPrint } from 'react-to-print';
 import slugify from 'slugify';
 
-const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
+const Show = ({ filters, questionnaire, questions, questionTypes, stats, questionTags }) => {
   const { section_id: sectionId, question_type_code: questionTypeCode, tags } = filters;
   const { sections, title: questionnaireTitle } = questionnaire;
 
@@ -91,20 +97,16 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
     });
   };
 
-  const handleAddFilterTag = (e) => {
-    if (e.keyCode === 13) {
-      const newFilteredTags = filteredTags;
-      newFilteredTags.push(e.target.value);
-      setFilteredTags(newFilteredTags);
-      router.get(`/questionnaires/${questionnaire.id}`, {
-        filters: {
-          ...filters,
-          tags: newFilteredTags,
-        }
-      }, {
-        preserveScroll: true,
-      });
-    }
+  const handleChangeTags = (_e, value) => {
+    setFilteredTags(value);
+    router.get(`/questionnaires/${questionnaire.id}`, {
+      filters: {
+        ...filters,
+        tags: value,
+      }
+    }, {
+      preserveScroll: true,
+    });
   };
 
   const handlePaginationChange = (_e, page) => {
@@ -173,24 +175,6 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
     router.patch(`/questionnaires/${questionnaire.id}`, {
       description: newContent,
     });
-  };
-
-  const handleDeleteFilterTag = (tag) => () => {
-    const updatedFilteredTags = filteredTags;
-    const index = updatedFilteredTags.indexOf(tag);
-
-    if (index !== -1) {
-      updatedFilteredTags.splice(index, 1);
-      setFilteredTags(updatedFilteredTags);
-      router.get(`/questionnaires/${questionnaire.id}`, {
-        filters: {
-          ...filters,
-          tags: updatedFilteredTags,
-        }
-      }, {
-        preserveScroll: true,
-      });
-    }
   };
 
   const handleDeleteSection = (id) => (e) => {
@@ -371,9 +355,10 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
         {!questionnaire.is_published && <Box width="50%">
           <Paper elevation={1} sx={{ p: 2 }}>
             {!questionnaire.is_published && !!sections.length && <Box sx={{ mt: 2, mb: 2 }}>
-              <Typography>Allocate Questions</Typography>
+              <Typography variant="body1">Allocate Questions</Typography>
+              <Divider sx={{ my: 2 }} />
               <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                <FormControl fullWidth>
+                <FormControl fullWidth size="small">
                   <InputLabel id="questionnaire-section-select-label">Section</InputLabel>
                   <Select
                     id='questionnaire-section-select'
@@ -386,7 +371,7 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                     </MenuItem>)}
                   </Select>
                 </FormControl>
-                <FormControl fullWidth>
+                <FormControl fullWidth size="small">
                   <InputLabel id="question-type-select-label">Question Type</InputLabel>
                   <Select
                     id='question-type-select'
@@ -401,11 +386,16 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
                 </FormControl>
               </Stack>
               <Box sx={{ mb: 2 }}>
-                <Typography><FilterListSharp /> Filters</Typography>
-                <Stack spacing={2} sx={{ mb: 2 }}>
-                  {filteredTags.map((tag, tagIndex) => <Chip key={`tag-${tagIndex}`} label={tag} onDelete={handleDeleteFilterTag(tag)} />)}
-                </Stack>
-                <TextField fullWidth label="Add tag filter" variant="outlined" onKeyDown={handleAddFilterTag} />
+                <Autocomplete
+                  disableCloseOnSelect
+                  fullWidth
+                  multiple
+                  size="small"
+                  options={questionTags}
+                  value={filteredTags}
+                  onChange={handleChangeTags}
+                  renderInput={(params) => <TextField {...params} label="Search Tags" />}
+                />
               </Box>
 
               {questionsMeta && <Box sx={{ mb: 2 }}>
@@ -418,35 +408,61 @@ const Show = ({ filters, questionnaire, questions, questionTypes, stats }) => {
               <Stack>
                 {!!questions.data.length && questions.data.map((question) => (<Paper key={`available-question-${question.id}`} sx={{ mb: 2, p: 2 }}>
                   <Stack spacing={1}>
-                    <Typography>
-                      <div dangerouslySetInnerHTML={{ __html: question.description }} />
-                    </Typography>
-                    {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, i) => (<Box key={`available-question-${question.id}-option-${option.id}`} sx={{ mb: 2 }}>
-                      <Stack direction="row" spacing={2}>
-                        <Button color={option.is_correct ? "success" : "inherit"} variant="contained">
-                          {String.fromCharCode(65 + i)}
-                        </Button>
-                        <Typography>
-                          <div dangerouslySetInnerHTML={{ __html: option.description }} />
-                        </Typography>
-                      </Stack>
-                    </Box>))}
-                    <Box sx={{ mb: 2 }}>
-                      <Typography>Usages: {question.usages_count}</Typography>
-                      <Typography>Total Answers Count: {question.answers_count}</Typography>
-                    </Box>
-                    {question.type.code.toLowerCase() === 'arq' && <ButtonGroup>
-                      <Button
-                        color={question.is_true ? "success" : "inherit"}
-                        variant="contained">
-                        True
-                      </Button>
-                      <Button
-                        color={!question.is_true ? "success" : "inherit"}
-                        variant="contained">
-                        False
-                      </Button>
-                    </ButtonGroup>}
+                    <TableContainer>
+                      <Table size="small">
+                        <TableBody>
+                          <TableRow>
+                            <TableCell colSpan={2}>
+                              <div dangerouslySetInnerHTML={{ __html: question.description }} />
+                            </TableCell>
+                          </TableRow>
+                          {question.type.code.toLowerCase() === 'mcq' && question.options.map((option, i) => <TableRow
+                            key={`available-question-${question.id}-option-${option.id}`}>
+                            <TableCell width={1}>
+                              <Button color={option.is_correct ? "success" : "inherit"} size="small" variant="contained">
+                                {String.fromCharCode(65 + i)}
+                              </Button>
+                            </TableCell>
+                            <TableCell>
+                              <div dangerouslySetInnerHTML={{ __html: option.description }} />
+                            </TableCell>
+                          </TableRow>)}
+                          {question.type.code.toLowerCase() === 'arq' && <TableRow>
+                            <TableCell colSpan={2}>
+                              <ButtonGroup size="small">
+                                <Button
+                                  color={question.is_true ? "success" : "inherit"}
+                                  variant="contained">
+                                  True
+                                </Button>
+                                <Button
+                                  color={!question.is_true ? "success" : "inherit"}
+                                  variant="contained">
+                                  False
+                                </Button>
+                              </ButtonGroup>
+                            </TableCell>
+                          </TableRow>}
+                        </TableBody>
+                        <TableFooter>
+                          <TableRow>
+                            <TableCell colSpan={2}>
+                              <Stack direction="row" spacing={1}>
+                                <Chip label={`Usages: ${question.usages_count}`} color="secondary" />
+                                <Chip label={`Total Responses: ${question.answers_count}`} color="secondary" />
+                                {question.answers_count > 0 && <>
+                                  <Chip label={`Correct Responses: ${question.correct_answers_count}`} color="secondary" />
+                                  <Chip
+                                    label={`Accuracy: ${(question.correct_answers_count / question.answers_count * 100).toFixed(1)}%`}
+                                    color="secondary" />
+                                </>}
+                              </Stack>
+                            </TableCell>
+                          </TableRow>
+                        </TableFooter>
+                      </Table>
+                    </TableContainer>
+
                     <Button
                       fullWidth
                       onClick={handleAddQuestionToSection(question.id, filteredSectionId)}
@@ -481,6 +497,7 @@ Show.propTypes = {
   questions: PropTypes.object.isRequired,
   questionTypes: PropTypes.array.isRequired,
   stats: PropTypes.object,
+  questionTags: PropTypes.array.isRequired,
 };
 
 export default Show;

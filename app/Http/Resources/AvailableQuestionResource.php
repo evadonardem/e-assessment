@@ -20,6 +20,7 @@ class AvailableQuestionResource extends JsonResource
             'type' => QuestionTypeResource::make($this->type),
             'is_published' => $this->is_published,
             'answers_count' => $this->when(isset($this->answers_count), $this->answers_count),
+            'correct_answers_count' => $this->when(isset($this->correct_answers_count), $this->correct_answers_count),
             'options' => $this->when(
                 strcasecmp($this->type->code, 'mcq') === 0,
                 QuestionOptionResource::collection($this->options->shuffle())
